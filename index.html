@@ -19,27 +19,8 @@
   <!-- Google Fonts: Montserrat (heading) · Inter (body) · JetBrains Mono (label) -->
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-  <!-- Tailwind Play CDN (halaman ini sengaja self-contained, tanpa build step) -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            heading: ["Montserrat", "sans-serif"],
-            sans: ["Inter", "sans-serif"],
-            mono: ['"JetBrains Mono"', "monospace"],
-          },
-          colors: {
-            muted: "#737373",
-            mutedSoft: "#666666",
-            line: "#e5e5e5",
-            soft: "#f5f5f5",
-          },
-        },
-      },
-    };
-  </script>
+  <!-- Tailwind, dikompilasi & di-purge saat build (npm run build), bukan Play CDN -->
+  <link rel="stylesheet" href="assets/tailwind.css">
 
   <!-- GSAP: hanya untuk entrance & scroll-reveal, tidak mengubah pola interaksi -->
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
