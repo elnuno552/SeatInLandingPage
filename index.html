@@ -91,9 +91,11 @@
     /* ═══════════════ ENHANCEMENT LAYER ═══════════════ */
 
     /* Grain halus di seluruh halaman, memberi tekstur cetak tanpa mengganggu kontras */
+    /* absolute (bukan fixed) supaya ikut scroll bareng konten, bukan di-blend ulang tiap frame scroll */
+    body { position: relative; }
     body::after {
       content: "";
-      position: fixed;
+      position: absolute;
       inset: 0;
       z-index: 60;
       pointer-events: none;
