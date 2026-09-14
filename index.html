@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>SeatIn: Sistem Reservasi untuk Restoran &amp; Kafe</title>
+  <link rel="icon" type="image/png" href="assets/seatin-logo.png">
+  <meta id="meta-desc" name="description" content="SeatIn mengubah reservasi WhatsApp yang berantakan jadi satu sistem rapi: tamu memesan online, uang muka otomatis, notifikasi WhatsApp, dan dashboard antrean untuk tim Anda.">
+  <meta name="keywords" content="sistem reservasi restoran, aplikasi booking kafe, reservasi online F&B, notifikasi WhatsApp reservasi, SeatIn">
+
+  <meta property="og:title" content="SeatIn: Sistem Reservasi untuk Restoran &amp; Kafe">
+  <meta property="og:description" content="Tamu memesan sendiri secara online, uang muka masuk otomatis, konfirmasi terkirim lewat WhatsApp.">
+  <meta property="og:type" content="website">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+
+  <!-- Google Fonts: Montserrat (heading) · Inter (body) · JetBrains Mono (label) -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- Tailwind Play CDN (halaman ini sengaja self-contained, tanpa build step) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            heading: ["Montserrat", "sans-serif"],
+            sans: ["Inter", "sans-serif"],
+            mono: ['"JetBrains Mono"', "monospace"],
+          },
+          colors: {
+            muted: "#737373",
+            mutedSoft: "#666666",
+            line: "#e5e5e5",
+            soft: "#f5f5f5",
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- GSAP: hanya untuk entrance & scroll-reveal, tidak mengubah pola interaksi -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js" defer></script>
+
+  <style>
+    body { font-family: Inter, sans-serif; }
+    h1, h2, h3, h4 { font-family: Montserrat, sans-serif; letter-spacing: -0.02em; }
+
+    /* Skala heading, fluid via clamp(), bukan breakpoint diskrit */
+    .h-hero {
+      font-family: Montserrat, sans-serif;
+      font-weight: 900;
+      text-transform: uppercase;
+      font-size: clamp(38px, 9vw, 124px);
+      letter-spacing: -0.03em;
+      line-height: 0.9;
+    }
+    .h-sec {
+      font-family: Montserrat, sans-serif;
+      font-weight: 900;
+      text-transform: uppercase;
+      font-size: clamp(32px, 4.5vw, 64px);
+      letter-spacing: -0.03em;
+      line-height: 0.95;
+    }
+    .h-cta {
+      font-family: Montserrat, sans-serif;
+      font-weight: 900;
+      text-transform: uppercase;
+      font-size: clamp(30px, 5vw, 72px);
+      letter-spacing: -0.03em;
+      line-height: 0.9;
+    }
+    .font-label {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+    .step-num {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px;
+      letter-spacing: 0.14em;
+    }
+
+    /* Header sticky jangan menutupi heading saat anchor jump */
+    section[id] { scroll-margin-top: 92px; }
+
+    /* Field kontak, garis bawah tipis, tanpa shadow (konsisten dengan brand) */
+    .field {
+      width: 100%;
+      background: transparent;
+      border: 0;
+      border-bottom: 1px solid #e5e5e5;
+      padding: 10px 0;
+      font-size: 14px;
+      color: #000;
+      transition: border-color 0.2s;
+    }
+    .field::placeholder { color: #707070; }
+    .field:focus { outline: none; border-bottom-color: #000; }
+    select.field { appearance: none; border-radius: 0; }
+
+    .lang-btn.is-active { background: #000; color: #fff; }
+
+    /* ═══════════════ ENHANCEMENT LAYER ═══════════════ */
+
+    /* Grain halus di seluruh halaman, memberi tekstur cetak tanpa mengganggu kontras */
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      pointer-events: none;
+      opacity: 0.035;
+      mix-blend-mode: multiply;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    /* Seleksi teks & scrollbar tetap monokrom, bukan biru default browser */
+    ::selection { background: #000; color: #fff; }
+    html { scrollbar-color: #000 #fff; scrollbar-width: thin; }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: #fff; }
+    ::-webkit-scrollbar-thumb { background: #000; border: 3px solid #fff; }
+
+    /* Garis progres scroll di bawah header */
+    #scroll-progress { transform-origin: left; transform: scaleX(0); will-change: transform; }
+
+    /* Angka watermark raksasa per-section, dekorasi editorial (disembunyikan di layar sempit) */
+    .sec-num {
+      position: absolute;
+      top: 0;
+      right: 0;
+      font-family: "JetBrains Mono", monospace;
+      font-weight: 500;
+      font-size: clamp(72px, 7.5vw, 132px);
+      line-height: 1;
+      color: transparent;
+      -webkit-text-stroke: 1px #e2e2e2;
+      z-index: -1;
+      pointer-events: none;
+      user-select: none;
+    }
+    .sec-num--soft { -webkit-text-stroke-color: #d8d8d8; }
+    .sec-num--dark { -webkit-text-stroke-color: rgba(255,255,255,0.16); }
+
+    /* Daftar bergaris atas (langkah proses, cara kerja, FAQ): geser + garis menghitam saat hover */
+    .border-t.gsap-card { transition: border-color 0.25s ease, padding-left 0.25s ease; }
+    .border-t.gsap-card:hover { border-top-color: #000; padding-left: 8px; }
+
+    /* Daftar baris bergaris bawah (dipakai di "Cocok Untuk" & "Masalahnya"), alternatif dari kartu kotak supaya section-section ini tidak seragam dengan fitur/dukungan */
+    .list-row { transition: border-color 0.25s ease, padding-left 0.25s ease; }
+    .list-row:hover { border-color: #000; padding-left: 8px; }
+
+    /* Grid spesifikasi "Fitur": sel bergaris seperti tabel, bukan kartu terpisah bershadow */
+    .spec-cell { transition: border-color 0.2s ease; }
+    .spec-cell:hover { border-color: #000; }
+
+    /* Timeline "Proses Setup": beda dari grid 4-kolom "Cara Kerja" supaya kedua section langkah ini tidak identik */
+    .timeline-node { transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease; }
+    .timeline-item:hover .timeline-node.is-outline { border-color: #000; }
+
+    /* Tanda siku dekoratif di sudut, gaya penanda cetak/editorial */
+    .corner-ticks { position: relative; }
+    .corner-ticks::before, .corner-ticks::after {
+      content: "+";
+      position: absolute;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 20px;
+      color: #a3a3a3;
+      line-height: 1;
+    }
+    .corner-ticks::before { top: -10px; left: -10px; }
+    .corner-ticks::after { bottom: -10px; right: -10px; }
+
+    /* Tekstur garis diagonal halus, dipakai di placeholder & band gelap */
+    .texture-light { background-image: repeating-linear-gradient(135deg, rgba(0,0,0,0.035) 0 1px, transparent 1px 14px); }
+    .texture-dark { background-image: repeating-linear-gradient(135deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 14px); }
+
+    /* Ticker berjalan di hero */
+    .marquee-wrap { overflow: hidden; }
+    .marquee-track { display: flex; width: max-content; animation: marquee 24s linear infinite; }
+    .marquee-wrap:hover .marquee-track { animation-play-state: paused; }
+    @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+    /* Tombol pil: tekanan halus saat aktif */
+    a.rounded-full, button.rounded-full {
+      transition: transform 0.15s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    }
+    a.rounded-full:active, button.rounded-full:active { transform: scale(0.96); }
+
+    /* Fokus keyboard tetap terlihat jelas, tanpa outline biru default */
+    a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+      outline: 2px solid #000;
+      outline-offset: 3px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .marquee-track { animation: none; }
+      body::after { display: none; }
+    }
+
+    /* Accordion FAQ, pakai <details>/<summary> native supaya tetap bisa dibuka/tutup tanpa JS */
+    .faq-toggle {
+      cursor: pointer;
+      list-style: none;
+      transition: padding-left 0.25s ease;
+    }
+    .faq-toggle::-webkit-details-marker { display: none; }
+    .faq-item:hover .faq-toggle { padding-left: 6px; }
+    .faq-item:hover { border-color: #000; }
+
+    .faq-icon { position: relative; width: 18px; height: 18px; }
+    .faq-icon-h, .faq-icon-v {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      background: #000;
+      transition: transform 0.3s ease;
+    }
+    .faq-icon-h { width: 16px; height: 1.5px; transform: translate(-50%, -50%); }
+    .faq-icon-v { width: 1.5px; height: 16px; transform: translate(-50%, -50%); }
+    .faq-item[open] .faq-icon-v { transform: translate(-50%, -50%) rotate(90deg); }
+
+    .faq-item summary { padding-right: 2px; }
+    .faq-item p { animation: faq-fade 0.35s ease; }
+    @keyframes faq-fade { from { opacity: 0; } to { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) {
+      .faq-item p { animation: none; }
+    }
+    /* GSAP mengambil alih animasi buka/tutup FAQ saat tersedia, matikan fade CSS supaya tidak dobel */
+    .gsap-faq-ready .faq-item p { animation: none; }
+
+  </style>
+</head>
+<body class="bg-white text-black antialiased">
+
+<!-- ══════════════════ HEADER ══════════════════ -->
+<header class="sticky top-0 z-50 w-full bg-white/95 backdrop-blur border-b border-line">
+  <div class="relative px-5 sm:px-10 lg:px-20 h-[76px] flex items-center gap-4">
+
+    <a href="#top" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center shrink-0">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAF8AAAA0CAYAAADsf+RsAAAD0UlEQVR4nO2ZW4iVVRTHf47mqEXjvYsXHAu8USAqiGmJUEQ+jGYgVpgiKj75lhS95IOXF4lEH9IHsSiCSALFQPQlRR9LkiIvgzZeYigUrznmiYX/DzYfe5/znTPnODO6frCZc2bvvfbaa++91tr7gOM4juM4juM4juM4juM4juMUoh+10x8YATQBJaATuN8NeU4FhgGbgasyeL5cBw4A87UofYFPgY5c+QMYSS86ISuBOwmjx8quHtb584hO+wu2uwmMbrSCAwq2W1WlMe8B39So02PDgIKuZmOVck8CxxJ1zcBEYJp22c/ABaCrgswW9XtB388Cp4EbuXaD1XZIRMZA4Fl9vgbcLnDiR+VcqOn8j/QdCszQX5tHe73j3ryEW9kNjNNkngeWAj+pbl1EznDgy4Ss+6ozOSEm+7MyMcbKOeDNoM/agm7xgwJuZ5BiQFh3V3M9Gul3R+65biyPDGJupS3RvkW7O+SNgvHiFjAnyKZ+qCLGbH5Ixq9U/gNW1Mv488sM9BewB1gGPJfoP0u7pajyncAE9V2gyRSd9KJeYPzMLdUlYJvPv1RwUPOhO7T7jSeA45F27cB7wPvAL5H6b4OYdCiQ/SPwdRk3dFgntSNx0rqCdPLtBhq/pA1ZF16vcvdm7uPliBHMiJMC2eO0U/I7xxbdeAWYntOnSSeuVKZfPVLNlPHtlG0AxgIfJ2ywpZJRi16EDslgqQyGSMaxT4bL+3+b0O+BkhcCg2U8Cbyoz5bRzJW8bNdanyWRcZt12hrNd8BW6WKLd7GReT5yFXOVVi1SwH0tYrgM2zmv1qIUD1I8C7irgS/ofZgtMuxk/waMaZTxzRCTgVPyt3tUjKd0BD+J9EsFnSs6uim6dA+w+JHHJvu38vjUwvcJirqdmbo4XQbWy9dlfe2ScwT4N9LvROQSZOwFxkvOWJ0g2+Gt+t6qy03ehdg94mm1eYfqmaoF6/+Q3FO3jd9P6VtTcOn5M5cCHon4dluM74GDEZkfKqh1KF09oweubYFRsptoyEidNKv7qILelqHladX/bex36QNMkbLVplpfBRPurKLfdi3AWzWMGT6IVdJ7fzeynTCTCdPhumc7ixPvJOWwia0JgtNs7e4ivKTxDidOTcb5hEvLsIxqZ5n6BXor6jGKGH+THrO26zGqHO1692hTrk/wCDZF2YsF25QxV8oo1+S2liQM+CuwsII+Jbm3tsSYpVoylJ7+Jcty+Gd08bHAVe6FMUVzLlOp9MIY/mp2V5epammR7nRDhuM4juM4juM4juM4juM4juM4juPw6PM/sGTzpGZhDDQAAAAASUVORK5CYII=" alt="SeatIn" width="95" height="52" class="h-9 sm:h-10 w-auto">
+    </a>
+
+    <nav class="hidden lg:flex items-center gap-5 xl:gap-8 text-sm text-muted">
+      <a href="#fitur" class="hover:text-black transition-colors" data-i18n="nav.fitur">Fitur</a>
+      <a href="#cara-kerja" class="hover:text-black transition-colors" data-i18n="nav.cara">Cara Kerja</a>
+      <a href="#cocok" class="hover:text-black transition-colors" data-i18n="nav.cocok">Cocok Untuk</a>
+      <a href="#proses" class="hover:text-black transition-colors" data-i18n="nav.proses">Proses</a>
+      <a href="#faq" class="hover:text-black transition-colors" data-i18n="nav.faq">FAQ</a>
+    </nav>
+
+    <div class="flex items-center gap-3 ml-auto">
+      <div class="flex items-center border border-line rounded-full overflow-hidden text-[11px] font-mono tracking-widest">
+        <button type="button" data-lang="id" class="lang-btn is-active px-3 py-1.5 transition-colors">ID</button>
+        <button type="button" data-lang="en" class="lang-btn px-3 py-1.5 transition-colors">EN</button>
+      </div>
+
+      <a href="#kontak" class="hidden sm:inline-block bg-black text-white text-sm font-medium px-7 py-3 rounded-full hover:bg-neutral-800 transition-colors whitespace-nowrap" data-i18n="nav.cta">Konsultasi Gratis</a>
+
+      <button type="button" id="menu-btn" aria-label="Menu" aria-expanded="false" class="lg:hidden p-2 -mr-2">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.5" stroke-linecap="round"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div id="scroll-progress" class="absolute bottom-0 left-0 h-[2px] w-full bg-black"></div>
+
+  <div id="mobile-menu" class="hidden lg:hidden border-t border-line bg-white px-5 sm:px-10 py-4 flex-col gap-1">
+    <a href="#fitur" class="py-2.5 text-sm text-muted hover:text-black" data-i18n="nav.fitur">Fitur</a>
+    <a href="#cara-kerja" class="py-2.5 text-sm text-muted hover:text-black" data-i18n="nav.cara">Cara Kerja</a>
+    <a href="#cocok" class="py-2.5 text-sm text-muted hover:text-black" data-i18n="nav.cocok">Cocok Untuk</a>
+    <a href="#proses" class="py-2.5 text-sm text-muted hover:text-black" data-i18n="nav.proses">Proses</a>
+    <a href="#faq" class="py-2.5 text-sm text-muted hover:text-black" data-i18n="nav.faq">FAQ</a>
+    <a href="#kontak" class="mt-3 inline-block text-center bg-black text-white text-sm font-medium px-7 py-3 rounded-full" data-i18n="nav.cta">Konsultasi Gratis</a>
+  </div>
+</header>
+
+<!-- ══════════════════ HERO ══════════════════ -->
+<section id="top" class="px-5 sm:px-10 lg:px-20 pt-10 sm:pt-16">
+  <p class="font-label text-muted mb-5 gsap-hero-label" data-i18n="hero.label">Sistem Reservasi untuk F&amp;B</p>
+
+  <h1 class="h-hero mb-6 sm:mb-8 break-words gsap-hero-title" data-i18n-html="hero.title">Reservasi<br>Penuh, Tanpa<br>Repot.</h1>
+
+  <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-7 lg:gap-12 mb-10 sm:mb-12">
+    <p class="text-base leading-relaxed text-muted max-w-2xl gsap-hero-sub" data-i18n="hero.sub">
+      SeatIn mengubah reservasi WhatsApp yang berantakan jadi satu sistem yang rapi. Tamu memesan sendiri secara online, uang muka masuk otomatis, dan tim Anda tinggal memantau semuanya dari satu dashboard.
+    </p>
+
+    <div class="flex flex-wrap items-center gap-3 shrink-0 gsap-hero-cta">
+      <a href="#kontak" class="bg-black text-white text-sm font-medium px-10 py-4 rounded-full hover:bg-neutral-800 transition-colors whitespace-nowrap" data-i18n="hero.cta1">Konsultasi Gratis</a>
+      <!-- TODO: ganti href ke URL demo yang boleh dipublikasikan -->
+      <a href="#fitur" class="border border-black text-black text-sm font-medium px-10 py-4 rounded-full hover:bg-black hover:text-white transition-colors whitespace-nowrap" data-i18n="hero.cta2">Lihat Fiturnya</a>
+    </div>
+  </div>
+
+  <div class="marquee-wrap border-y border-line mb-10 sm:mb-12 gsap-hero-cta">
+    <div class="marquee-track py-3">
+      <span class="font-label text-muted whitespace-nowrap pr-12" data-i18n="hero.marquee">Restoran • Kafe • Rooftop • Rental Unit • Fine Dining • Bar</span>
+      <span class="font-label text-muted whitespace-nowrap pr-12" data-i18n="hero.marquee" aria-hidden="true">Restoran • Kafe • Rooftop • Rental Unit • Fine Dining • Bar</span>
+    </div>
+  </div>
+
+  <div class="corner-ticks texture-light w-full h-[260px] sm:h-[380px] md:h-[460px] lg:h-[540px] rounded-t-lg bg-soft border border-line border-b-0 overflow-hidden gsap-hero-img">
+    <img src="assets/seatin-dashboard.png" alt="Screenshot dashboard SeatIn" class="w-full h-full object-cover object-top">
+  </div>
+</section>
+
+<!-- ══════════════════ MASALAH ══════════════════ -->
+<section id="masalah" class="relative z-0 px-5 sm:px-10 lg:px-20 py-12 sm:py-16 lg:py-20">
+  <span class="sec-num hidden lg:block" aria-hidden="true">01</span>
+  <p class="font-label text-muted mb-4 gsap-bar" data-i18n="masalah.label">Masalahnya</p>
+  <h2 class="h-sec mb-4 break-words gsap-head" data-i18n="masalah.title">Reservasi Manual Itu Mahal</h2>
+  <p class="text-sm leading-relaxed text-muted max-w-2xl mb-9 sm:mb-11 gsap-head" data-i18n="masalah.sub">
+    Bukan karena Anda kurang rapi, tapi karena alatnya memang tidak dirancang untuk itu.
+  </p>
+
+  <div class="border-t border-line">
+    <div class="list-row flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-8 py-7 sm:py-8 border-b border-line gsap-card">
+      <div class="flex items-baseline gap-4 sm:w-64 shrink-0">
+        <span class="step-num text-muted shrink-0">01</span>
+        <div class="text-lg font-semibold text-black" data-i18n="masalah.c1.t">Chat Menumpuk di Satu Ponsel</div>
+      </div>
+      <div class="text-sm leading-relaxed text-muted sm:max-w-xl sm:pt-0.5" data-i18n="masalah.c1.d">Reservasi masuk lewat DM Instagram, WhatsApp, dan telepon. Satu orang harus membalas semuanya, dan satu chat yang terlewat berarti satu meja kosong.</div>
+    </div>
+
+    <div class="list-row flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-8 py-7 sm:py-8 border-b border-line gsap-card">
+      <div class="flex items-baseline gap-4 sm:w-64 shrink-0">
+        <span class="step-num text-muted shrink-0">02</span>
+        <div class="text-lg font-semibold text-black" data-i18n="masalah.c2.t">No-Show Tanpa Konsekuensi</div>
+      </div>
+      <div class="text-sm leading-relaxed text-muted sm:max-w-xl sm:pt-0.5" data-i18n="masalah.c2.d">Tamu memesan lalu tidak datang. Tanpa uang muka, meja yang sudah Anda tahan hilang begitu saja, beserta pendapatannya.</div>
+    </div>
+
+    <div class="list-row flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-8 py-7 sm:py-8 border-b border-line gsap-card">
+      <div class="flex items-baseline gap-4 sm:w-64 shrink-0">
+        <span class="step-num text-muted shrink-0">03</span>
+        <div class="text-lg font-semibold text-black" data-i18n="masalah.c3.t">Double Booking &amp; Salah Catat</div>
+      </div>
+      <div class="text-sm leading-relaxed text-muted sm:max-w-xl sm:pt-0.5" data-i18n="masalah.c3.d">Catatan di buku atau spreadsheet gampang bentrok. Dua tamu di meja yang sama pada jam yang sama adalah pengalaman yang sulit diperbaiki.</div>
+    </div>
+
+    <div class="list-row flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-8 py-7 sm:py-8 border-b border-line gsap-card">
+      <div class="flex items-baseline gap-4 sm:w-64 shrink-0">
+        <span class="step-num text-muted shrink-0">04</span>
+        <div class="text-lg font-semibold text-black" data-i18n="masalah.c4.t">Tidak Ada Data untuk Diputuskan</div>
+      </div>
+      <div class="text-sm leading-relaxed text-muted sm:max-w-xl sm:pt-0.5" data-i18n="masalah.c4.d">Berapa reservasi bulan ini? Jam berapa paling ramai? Tanpa pencatatan yang rapi, semua keputusan hanya bersandar pada perasaan.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ BANDINGKAN ══════════════════ -->
+<section id="bandingkan" class="relative z-0 border-t border-line px-5 sm:px-10 lg:px-20 py-12 sm:py-16 lg:py-20">
+  <span class="sec-num hidden lg:block" aria-hidden="true">02</span>
+  <p class="font-label text-muted mb-4 gsap-bar" data-i18n="bandingkan.label">Bandingkan</p>
+  <h2 class="h-sec mb-4 break-words gsap-head" data-i18n="bandingkan.title">Manual vs SeatIn</h2>
+  <p class="text-sm leading-relaxed text-muted max-w-2xl mb-9 sm:mb-11 gsap-head" data-i18n="bandingkan.sub">
+    Lihat bedanya berdampingan antara cara manual dan SeatIn.
+  </p>
+
+  <div class="gsap-card overflow-x-auto border border-line rounded-lg">
+      <table class="w-full min-w-[600px] text-sm border-collapse">
+        <thead>
+          <tr class="border-b border-line">
+            <th class="font-label text-muted text-left px-5 py-4 w-[34%]" data-i18n="bandingkan.col.kriteria">Kriteria</th>
+            <th class="font-label text-muted text-left px-5 py-4" data-i18n="bandingkan.col.manual">Manual (WhatsApp / Buku)</th>
+            <th class="font-label text-white bg-black text-left px-5 py-4" data-i18n="bandingkan.col.seatin">SeatIn</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-line">
+            <td class="px-5 py-5 font-semibold text-black align-top" data-i18n="bandingkan.r1.k">Terima Reservasi</td>
+            <td class="px-5 py-5 text-muted align-top" data-i18n="bandingkan.r1.manual">Satu per satu, balas chat manual</td>
+            <td class="px-5 py-5 text-black align-top bg-soft" data-i18n="bandingkan.r1.seatin">Tamu isi sendiri, 24/7, otomatis masuk sistem</td>
+          </tr>
+          <tr class="border-b border-line">
+            <td class="px-5 py-5 font-semibold text-black align-top" data-i18n="bandingkan.r2.k">Uang Muka</td>
+            <td class="px-5 py-5 text-muted align-top" data-i18n="bandingkan.r2.manual">Ditagih manual, sering terlewat</td>
+            <td class="px-5 py-5 text-black align-top bg-soft" data-i18n="bandingkan.r2.seatin">Diminta otomatis saat booking, mengunci meja</td>
+          </tr>
+          <tr class="border-b border-line">
+            <td class="px-5 py-5 font-semibold text-black align-top" data-i18n="bandingkan.r3.k">Risiko Bentrok Jadwal</td>
+            <td class="px-5 py-5 text-muted align-top" data-i18n="bandingkan.r3.manual">Rawan dobel booking dari catatan berbeda</td>
+            <td class="px-5 py-5 text-black align-top bg-soft" data-i18n="bandingkan.r3.seatin">Slot terkunci otomatis begitu dikonfirmasi</td>
+          </tr>
+          <tr class="border-b border-line">
+            <td class="px-5 py-5 font-semibold text-black align-top" data-i18n="bandingkan.r4.k">Notifikasi ke Tamu</td>
+            <td class="px-5 py-5 text-muted align-top" data-i18n="bandingkan.r4.manual">Diketik manual satu-satu</td>
+            <td class="px-5 py-5 text-black align-top bg-soft" data-i18n="bandingkan.r4.seatin">Terkirim otomatis dari nomor WhatsApp bisnis</td>
+          </tr>
+          <tr class="border-b border-line">
+            <td class="px-5 py-5 font-semibold text-black align-top" data-i18n="bandingkan.r5.k">Rekap &amp; Laporan</td>
+            <td class="px-5 py-5 text-muted align-top" data-i18n="bandingkan.r5.manual">Dihitung manual dari chat atau buku catatan</td>
+            <td class="px-5 py-5 text-black align-top bg-soft" data-i18n="bandingkan.r5.seatin">Ekspor Excel kapan saja, siap dianalisis</td>
+          </tr>
+          <tr>
+            <td class="px-5 py-5 font-semibold text-black align-top" data-i18n="bandingkan.r6.k">Kebutuhan Tim</td>
+            <td class="px-5 py-5 text-muted align-top" data-i18n="bandingkan.r6.manual">Perlu orang standby membalas chat</td>
+            <td class="px-5 py-5 text-black align-top bg-soft" data-i18n="bandingkan.r6.seatin">Tim tinggal konfirmasi atau tolak, sisanya otomatis</td>
+          </tr>
+        </tbody>
+      </table>
+  </div>
+</section>
+
+<!-- ══════════════════ FITUR ══════════════════ -->
+<section id="fitur" class="relative z-0 px-5 sm:px-10 lg:px-20 py-12 sm:py-16 lg:py-20 bg-soft">
+  <span class="sec-num sec-num--soft hidden lg:block" aria-hidden="true">03</span>
+  <p class="font-label text-mutedSoft mb-4 gsap-bar" data-i18n="fitur.label">Yang Anda Dapat</p>
+  <h2 class="h-sec mb-4 break-words gsap-head" data-i18n="fitur.title">Satu Sistem, Semua Beres</h2>
+  <p class="text-sm leading-relaxed text-mutedSoft max-w-2xl mb-9 sm:mb-11 gsap-head" data-i18n="fitur.sub">
+    Halaman reservasi untuk tamu dan dashboard untuk tim Anda, ada dalam satu sistem yang sama.
+  </p>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 border-t border-l border-line">
+    <div class="spec-cell border-r border-b border-line bg-white p-8 sm:p-10 gsap-card">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-6"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><polyline points="9 16 11 18 15 14"/></svg>
+      <div class="text-lg font-semibold text-black mb-3" data-i18n="fitur.c1.t">Tamu Booking Sendiri. Anda Tidak Perlu Standby.</div>
+      <div class="text-sm leading-relaxed text-muted" data-i18n="fitur.c1.d">Tamu memilih tanggal, jam, jumlah orang, dan area (indoor, outdoor, VIP, rooftop) langsung dari ponsel mereka, kapan pun, tanpa menunggu balasan.</div>
+    </div>
+
+    <div class="spec-cell border-r border-b border-line bg-white p-8 sm:p-10 gsap-card">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-6"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+      <div class="text-lg font-semibold text-black mb-3" data-i18n="fitur.c2.t">Menu Dipesan Duluan. Dapur Sudah Siap.</div>
+      <div class="text-sm leading-relaxed text-muted" data-i18n="fitur.c2.d">Tamu bisa memesan makanan dan minuman di muka, jadi pesanan siap saat mereka tiba. Bisa dimatikan bila tidak cocok dengan gaya layanan Anda.</div>
+    </div>
+
+    <div class="spec-cell border-r border-b border-line bg-white p-8 sm:p-10 gsap-card">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-6"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg>
+      <div class="text-lg font-semibold text-black mb-3" data-i18n="fitur.c3.t">DP Masuk Otomatis. No-Show Turun.</div>
+      <div class="text-sm leading-relaxed text-muted" data-i18n="fitur.c3.d">Minta DP untuk mengunci reservasi, bisa persentase dari total, nominal tetap, atau per orang. Cara paling ampuh menekan angka no-show.</div>
+    </div>
+
+    <div class="spec-cell border-r border-b border-line bg-white p-8 sm:p-10 gsap-card">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-6"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <div class="text-lg font-semibold text-black mb-3" data-i18n="fitur.c4.t">Notifikasi Jalan Sendiri. Chat Anda Kosong.</div>
+      <div class="text-sm leading-relaxed text-muted" data-i18n="fitur.c4.d">Pengajuan, menunggu DP, dikonfirmasi, ditolak beserta alasannya, sampai ucapan terima kasih setelah selesai, semua terkirim otomatis dari nomor bisnis Anda.</div>
+    </div>
+
+    <div class="spec-cell border-r border-b border-line bg-white p-8 sm:p-10 gsap-card">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-6"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+      <div class="text-lg font-semibold text-black mb-3" data-i18n="fitur.c5.t">Satu Dashboard. Semua Antrean Beres.</div>
+      <div class="text-sm leading-relaxed text-muted" data-i18n="fitur.c5.d">Konfirmasi atau tolak dalam satu klik, tambahkan reservasi manual untuk tamu yang menelepon, ekspor ke Excel, dan telusuri linimasa siapa mengubah apa. Hak akses diatur per staf.</div>
+    </div>
+
+    <div class="spec-cell border-r border-b border-line bg-white p-8 sm:p-10 gsap-card">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-6"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+      <div class="text-lg font-semibold text-black mb-3" data-i18n="fitur.c6.t">Ubah Sendiri. Tanpa Kode, Tanpa Developer.</div>
+      <div class="text-sm leading-relaxed text-muted" data-i18n="fitur.c6.d">Nama dan identitas bisnis, jam buka, daftar area, slot waktu, aturan DP, hari tutup, semua bisa Anda ubah sendiri dari halaman Pengaturan.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ CARA KERJA ══════════════════ -->
+<section id="cara-kerja" class="relative z-0 px-5 sm:px-10 lg:px-20 py-12 sm:py-16 lg:py-20">
+  <span class="sec-num hidden lg:block" aria-hidden="true">04</span>
+  <p class="font-label text-muted mb-4 gsap-bar" data-i18n="cara.label">Cara Kerja</p>
+  <h2 class="h-sec mb-9 sm:mb-11 break-words gsap-head" data-i18n="cara.title">Dari Ketuk Sampai Duduk</h2>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-x-6 gap-y-10">
+    <div class="border-t border-black pt-6 gsap-card">
+      <div class="step-num text-muted mb-5">01</div>
+      <div class="text-lg font-semibold text-black mb-3" data-i18n="cara.s1.t">Tamu Pilih Jadwal</div>
+      <div class="text-sm leading-relaxed text-muted" data-i18n="cara.s1.d">Membuka halaman reservasi Anda, lalu memilih tanggal, jam, jumlah tamu, dan area yang diinginkan.</div>
+    </div>
+    <div class="border-t border-line pt-6 gsap-card">
+      <div class="step-num text-muted mb-5">02</div>
+      <div class="text-lg font-semibold text-black mb-3" data-i18n="cara.s2.t">Pre-Order &amp; Bayar DP</div>
+      <div class="text-sm leading-relaxed text-muted" data-i18n="cara.s2.d">Tamu menambahkan menu bila perlu, lalu mentransfer uang muka sesuai aturan yang Anda tetapkan.</div>
+    </div>
+    <div class="border-t border-line pt-6 gsap-card">
+      <div class="step-num text-muted mb-5">03</div>
+      <div class="text-lg font-semibold text-black mb-3" data-i18n="cara.s3.t">Konfirmasi Otomatis</div>
+      <div class="text-sm leading-relaxed text-muted" data-i18n="cara.s3.d">Begitu Anda menekan konfirmasi, WhatsApp berisi detail reservasi langsung masuk ke ponsel tamu.</div>
+    </div>
+    <div class="border-t border-line pt-6 gsap-card">
+      <div class="step-num text-muted mb-5">04</div>
+      <div class="text-lg font-semibold text-black mb-3" data-i18n="cara.s4.t">Tim Anda Pegang Kendali</div>
+      <div class="text-sm leading-relaxed text-muted" data-i18n="cara.s4.d">Semua reservasi tampil rapi di dashboard, siap dikonfirmasi, ditolak, atau diekspor menjadi laporan.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ COCOK UNTUK ══════════════════ -->
+<section id="cocok" class="relative z-0 px-5 sm:px-10 lg:px-20 py-12 sm:py-16 lg:py-20 bg-soft">
+  <span class="sec-num sec-num--soft hidden lg:block" aria-hidden="true">05</span>
+  <p class="font-label text-mutedSoft mb-4 gsap-bar" data-i18n="cocok.label">Cocok Untuk</p>
+  <h2 class="h-sec mb-4 break-words gsap-head" data-i18n="cocok.title">Bukan Cuma Restoran</h2>
+  <p class="text-sm leading-relaxed text-mutedSoft max-w-2xl mb-9 sm:mb-11 gsap-head" data-i18n="cocok.sub">
+    Sistem yang sama bisa mengatur meja, area, atau unit sewa per jam.
+  </p>
+
+  <div class="border-t border-line">
+    <div class="list-row flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-8 py-7 sm:py-8 border-b border-line gsap-card">
+      <div class="flex items-center gap-4 sm:w-64 shrink-0">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M3 2v7c0 1.7 1.3 3 3 3s3-1.3 3-3V2"/><line x1="6" y1="12" x2="6" y2="22"/><path d="M18 2c-1.7 1-3 3.5-3 6.5 0 2 1 3.5 3 3.5"/><line x1="18" y1="12" x2="18" y2="22"/></svg>
+        <div class="text-lg font-semibold text-black" data-i18n="cocok.c1.t">Restoran &amp; Fine Dining</div>
+      </div>
+      <div class="text-sm leading-relaxed text-muted sm:max-w-xl sm:pt-0.5" data-i18n="cocok.c1.d">Atur meja per area, kunci jam ramai dengan uang muka, dan siapkan pesanan sebelum tamu duduk.</div>
+    </div>
+
+    <div class="list-row flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-8 py-7 sm:py-8 border-b border-line gsap-card">
+      <div class="flex items-center gap-4 sm:w-64 shrink-0">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+        <div class="text-lg font-semibold text-black" data-i18n="cocok.c2.t">Kafe &amp; Coffee Shop</div>
+      </div>
+      <div class="text-sm leading-relaxed text-muted sm:max-w-xl sm:pt-0.5" data-i18n="cocok.c2.d">Reservasi ringan tanpa pre-order, atau aktifkan menu bila Anda ingin pesanan sudah siap lebih dulu.</div>
+    </div>
+
+    <div class="list-row flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-8 py-7 sm:py-8 border-b border-line gsap-card">
+      <div class="flex items-center gap-4 sm:w-64 shrink-0">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M3 21h18"/><path d="M5 21V8l7-5 7 5v13"/><path d="M9 21v-6h6v6"/></svg>
+        <div class="text-lg font-semibold text-black" data-i18n="cocok.c3.t">Rooftop &amp; Private Area</div>
+      </div>
+      <div class="text-sm leading-relaxed text-muted sm:max-w-xl sm:pt-0.5" data-i18n="cocok.c3.d">Area terbatas dengan kapasitas minimum dan maksimum sendiri, plus aturan pembatalan yang Anda tentukan.</div>
+    </div>
+
+    <div class="list-row flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-8 py-7 sm:py-8 border-b border-line gsap-card">
+      <div class="flex items-center gap-4 sm:w-64 shrink-0">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><line x1="6" y1="11" x2="10" y2="11"/><line x1="8" y1="9" x2="8" y2="13"/><line x1="15" y1="12" x2="15.01" y2="12"/><line x1="18" y1="10" x2="18.01" y2="10"/><rect x="2" y="6" width="20" height="12" rx="5"/></svg>
+        <div class="text-lg font-semibold text-black" data-i18n="cocok.c4.t">Rental Unit per Jam</div>
+      </div>
+      <div class="text-sm leading-relaxed text-muted sm:max-w-xl sm:pt-0.5" data-i18n="cocok.c4.d">PlayStation, karaoke, atau studio. Sistem yang sama bisa mengelola unit sewa, bukan hanya meja.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ PROSES ONBOARDING ══════════════════ -->
+<section id="proses" class="relative z-0 px-5 sm:px-10 lg:px-20 py-12 sm:py-16 lg:py-20">
+  <span class="sec-num hidden lg:block" aria-hidden="true">06</span>
+  <p class="font-label text-muted mb-4 gsap-bar" data-i18n="proses.label">Proses Setup</p>
+  <h2 class="h-sec mb-4 break-words gsap-head" data-i18n="proses.title">Siap Pakai, Bukan Proyek Bertahun</h2>
+  <p class="text-sm leading-relaxed text-muted max-w-2xl mb-9 sm:mb-11 gsap-head" data-i18n="proses.sub">
+    Anda tidak perlu tim IT. Cukup ceritakan tempat Anda lewat satu sesi meeting singkat, sisanya kami yang kerjakan.
+  </p>
+
+  <div class="relative">
+    <div class="absolute left-4 sm:left-5 top-4 bottom-4 w-px bg-line" aria-hidden="true"></div>
+    <div class="space-y-10 sm:space-y-12">
+      <div class="timeline-item relative pl-12 sm:pl-16 gsap-card">
+        <div class="timeline-node absolute left-0 top-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-black bg-black text-white flex items-center justify-center step-num">01</div>
+        <div class="text-lg font-semibold text-black mb-2" data-i18n="proses.s1.t">Meeting Kebutuhan</div>
+        <div class="text-sm leading-relaxed text-muted max-w-xl" data-i18n="proses.s1.d">Kami meeting dengan Anda untuk memahami use case tempat Anda: daftar area, jam operasional, dan aturan booking yang sesuai.</div>
+      </div>
+      <div class="timeline-item relative pl-12 sm:pl-16 gsap-card">
+        <div class="timeline-node is-outline absolute left-0 top-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-line bg-white text-black flex items-center justify-center step-num">02</div>
+        <div class="text-lg font-semibold text-black mb-2" data-i18n="proses.s2.t">Setup &amp; Kustomisasi</div>
+        <div class="text-sm leading-relaxed text-muted max-w-xl" data-i18n="proses.s2.d">Kami menyiapkan sistem, memasang identitas Anda, dan menyambungkan nomor WhatsApp bisnis.</div>
+      </div>
+      <div class="timeline-item relative pl-12 sm:pl-16 gsap-card">
+        <div class="timeline-node is-outline absolute left-0 top-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-line bg-white text-black flex items-center justify-center step-num">03</div>
+        <div class="text-lg font-semibold text-black mb-2" data-i18n="proses.s3.t">Training Tim</div>
+        <div class="text-sm leading-relaxed text-muted max-w-xl" data-i18n="proses.s3.d">Sesi singkat untuk staf: membaca antrean, mengonfirmasi, menolak, dan menarik laporan.</div>
+      </div>
+      <div class="timeline-item relative pl-12 sm:pl-16 gsap-card">
+        <div class="timeline-node is-outline absolute left-0 top-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-line bg-white text-black flex items-center justify-center step-num">04</div>
+        <div class="text-lg font-semibold text-black mb-2" data-i18n="proses.s4.t">Go-Live</div>
+        <div class="text-sm leading-relaxed text-muted max-w-xl" data-i18n="proses.s4.d">Halaman reservasi Anda tayang, dan kami tetap mendampingi setelah peluncuran.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ DUKUNGAN PERSONAL ══════════════════ -->
+<section id="dukungan" class="relative z-0 px-5 sm:px-10 lg:px-20 py-12 sm:py-16 lg:py-20 bg-soft">
+  <span class="sec-num sec-num--soft hidden lg:block" aria-hidden="true">07</span>
+  <p class="font-label text-mutedSoft mb-4 gsap-bar" data-i18n="dukungan.label">Dukungan Personal</p>
+  <h2 class="h-sec mb-4 break-words gsap-head" data-i18n="dukungan.title">Anda Tidak Sendirian Setelah Go-Live</h2>
+  <p class="text-sm leading-relaxed text-mutedSoft max-w-2xl mb-9 sm:mb-11 gsap-head" data-i18n="dukungan.sub">
+    Kami membangun SeatIn sebagai tim kecil yang turun tangan langsung, bukan perusahaan besar dengan lapisan tiket support.
+  </p>
+
+  <div class="grid grid-cols-1 sm:grid-cols-3 divide-y divide-line sm:divide-y-0 sm:divide-x">
+    <div class="gsap-card pt-8 sm:pt-0 sm:pr-8 first:pt-0">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-5"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+      <div class="text-lg font-semibold text-black mb-3" data-i18n="dukungan.c1.t">Obrolan Langsung, Bukan Tiket Berjenjang</div>
+      <div class="text-sm leading-relaxed text-mutedSoft" data-i18n="dukungan.c1.d">Pertanyaan Anda dijawab oleh orang yang membangun sistemnya sendiri, bukan diteruskan dari staf ke staf.</div>
+    </div>
+
+    <div class="gsap-card pt-8 sm:pt-0 sm:px-8">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <div class="text-lg font-semibold text-black mb-3" data-i18n="dukungan.c2.t">Satu Nomor WhatsApp untuk Semuanya</div>
+      <div class="text-sm leading-relaxed text-mutedSoft" data-i18n="dukungan.c2.d">Konsultasi awal, kendala teknis, sampai permintaan kustomisasi kecil, semua lewat nomor yang sudah Anda kenal, bukan portal tiket baru.</div>
+    </div>
+
+    <div class="gsap-card pt-8 sm:pt-0 sm:pl-8">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/><line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/></svg>
+      <div class="text-lg font-semibold text-black mb-3" data-i18n="dukungan.c3.t">Pendampingan Justru Dimulai Setelah Anda Live</div>
+      <div class="text-sm leading-relaxed text-mutedSoft" data-i18n="dukungan.c3.d">Banyak vendor sistem ramai sebelum closing dan sepi sesudahnya. Kami sebaliknya: mendampingi serius justru setelah sistem Anda berjalan.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ CTA BAND ══════════════════ -->
+<!--
+  TODO (opsional): kalau Limarasa Braga sudah memberi izin, ganti blok ini
+  dengan testimoni + nama klien. Sengaja dibiarkan sebagai CTA dulu supaya
+  tidak ada klaim/testimoni yang belum dikonfirmasi.
+-->
+<section class="relative bg-black texture-dark text-white overflow-hidden">
+  <div class="px-5 sm:px-10 lg:px-20 py-20 sm:py-24 lg:py-32">
+    <h2 class="h-cta max-w-4xl mb-7 break-words gsap-head" data-i18n-html="cta.title">Berhenti Mengurus<br>Reservasi Manual.</h2>
+    <p class="text-sm leading-relaxed text-white/70 max-w-xl mb-9 gsap-head" data-i18n="cta.sub">
+      Ceritakan tempat Anda, dan kami tunjukkan seperti apa SeatIn saat sudah dipasang dengan nama, area, dan menu Anda sendiri.
+    </p>
+    <a href="#kontak" class="inline-block bg-white text-black text-sm font-medium px-10 py-4 rounded-full hover:bg-neutral-200 transition-colors gsap-head" data-i18n="cta.btn">Mulai Konsultasi</a>
+  </div>
+</section>
+
+<!-- ══════════════════ FAQ ══════════════════ -->
+<section id="faq" class="relative z-0 px-5 sm:px-10 lg:px-20 py-12 sm:py-16 lg:py-20">
+  <span class="sec-num hidden lg:block" aria-hidden="true">08</span>
+  <p class="font-label text-muted mb-4 gsap-bar" data-i18n="faq.label">Pertanyaan Umum</p>
+  <h2 class="h-sec mb-9 sm:mb-11 break-words gsap-head" data-i18n="faq.title">Yang Sering Ditanya</h2>
+
+  <div class="border-t border-line">
+    <details class="faq-item group border-b border-line gsap-card" open>
+      <summary class="faq-toggle flex items-center justify-between gap-6 py-6">
+        <span class="text-base sm:text-lg font-semibold text-black" data-i18n="faq.q1">Berapa lama sampai sistem saya bisa dipakai?</span>
+        <span class="faq-icon shrink-0" aria-hidden="true"><span class="faq-icon-h"></span><span class="faq-icon-v"></span></span>
+      </summary>
+      <div class="faq-panel"><p class="max-w-2xl pb-6 pr-12 text-sm leading-relaxed text-muted" data-i18n="faq.a1">Umumnya satu sampai dua minggu setelah meeting kebutuhan selesai, tergantung banyaknya area dan menu yang perlu dimasukkan.</p></div>
+    </details>
+    <details class="faq-item group border-b border-line gsap-card">
+      <summary class="faq-toggle flex items-center justify-between gap-6 py-6">
+        <span class="text-base sm:text-lg font-semibold text-black" data-i18n="faq.q2">Apakah saya perlu paham teknologi?</span>
+        <span class="faq-icon shrink-0" aria-hidden="true"><span class="faq-icon-h"></span><span class="faq-icon-v"></span></span>
+      </summary>
+      <div class="faq-panel"><p class="max-w-2xl pb-6 pr-12 text-sm leading-relaxed text-muted" data-i18n="faq.a2">Tidak. Semua pengaturan harian (jam buka, area, slot waktu, aturan DP, hari tutup) diubah lewat halaman Pengaturan biasa, tanpa menyentuh kode.</p></div>
+    </details>
+    <details class="faq-item group border-b border-line gsap-card">
+      <summary class="faq-toggle flex items-center justify-between gap-6 py-6">
+        <span class="text-base sm:text-lg font-semibold text-black" data-i18n="faq.q3">Nomor WhatsApp siapa yang dipakai untuk notifikasi?</span>
+        <span class="faq-icon shrink-0" aria-hidden="true"><span class="faq-icon-h"></span><span class="faq-icon-v"></span></span>
+      </summary>
+      <div class="faq-panel"><p class="max-w-2xl pb-6 pr-12 text-sm leading-relaxed text-muted" data-i18n="faq.a3">Nomor bisnis Anda sendiri. Kami menyambungkannya ke sistem saat setup, jadi tamu menerima pesan dari nama yang sudah mereka kenal.</p></div>
+    </details>
+    <details class="faq-item group border-b border-line gsap-card">
+      <summary class="faq-toggle flex items-center justify-between gap-6 py-6">
+        <span class="text-base sm:text-lg font-semibold text-black" data-i18n="faq.q4">Bagaimana kalau saya tidak ingin meminta uang muka?</span>
+        <span class="faq-icon shrink-0" aria-hidden="true"><span class="faq-icon-h"></span><span class="faq-icon-v"></span></span>
+      </summary>
+      <div class="faq-panel"><p class="max-w-2xl pb-6 pr-12 text-sm leading-relaxed text-muted" data-i18n="faq.a4">Boleh dimatikan. Uang muka bersifat opsional, begitu juga pre-order menu. Sistemnya menyesuaikan gaya layanan Anda, bukan sebaliknya.</p></div>
+    </details>
+    <details class="faq-item group border-b border-line gsap-card">
+      <summary class="faq-toggle flex items-center justify-between gap-6 py-6">
+        <span class="text-base sm:text-lg font-semibold text-black" data-i18n="faq.q5">Apakah data reservasi saya bercampur dengan bisnis lain?</span>
+        <span class="faq-icon shrink-0" aria-hidden="true"><span class="faq-icon-h"></span><span class="faq-icon-v"></span></span>
+      </summary>
+      <div class="faq-panel"><p class="max-w-2xl pb-6 pr-12 text-sm leading-relaxed text-muted" data-i18n="faq.a5">Tidak. Setiap klien mendapat deployment dan basis data sendiri, jadi data tamu Anda berdiri terpisah dari klien mana pun.</p></div>
+    </details>
+    <details class="faq-item group border-b border-line gsap-card">
+      <summary class="faq-toggle flex items-center justify-between gap-6 py-6">
+        <span class="text-base sm:text-lg font-semibold text-black" data-i18n="faq.q6">Bisakah datanya diekspor untuk laporan?</span>
+        <span class="faq-icon shrink-0" aria-hidden="true"><span class="faq-icon-h"></span><span class="faq-icon-v"></span></span>
+      </summary>
+      <div class="faq-panel"><p class="max-w-2xl pb-6 pr-12 text-sm leading-relaxed text-muted" data-i18n="faq.a6">Bisa. Antrean reservasi dapat diekspor menjadi berkas Excel lengkap dengan tanggal, area, status, dan nilai transaksi.</p></div>
+    </details>
+  </div>
+</section>
+
+<!-- ══════════════════ KONTAK ══════════════════ -->
+<section id="kontak" class="relative z-0 px-5 sm:px-10 lg:px-20 py-12 sm:py-16 lg:py-20 bg-soft">
+  <span class="sec-num sec-num--soft hidden lg:block" aria-hidden="true">09</span>
+  <p class="font-label text-mutedSoft mb-4 gsap-bar" data-i18n="kontak.label">Mulai Dari Sini</p>
+  <h2 class="h-sec mb-4 break-words gsap-head" data-i18n="kontak.title">Ceritakan Tempat Anda</h2>
+  <p class="text-sm leading-relaxed text-mutedSoft max-w-2xl mb-9 sm:mb-11 gsap-head" data-i18n="kontak.sub">
+    Isi formulir singkat ini. Kami membalas lewat WhatsApp untuk membahas kebutuhan tempat Anda, gratis dan tanpa komitmen.
+  </p>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Form -->
+    <div class="bg-white border border-line rounded-lg p-8 sm:p-10 gsap-card">
+      <form id="contact-form" class="space-y-6">
+        <div>
+          <label for="f-nama" class="font-label text-muted block mb-1" data-i18n="form.nama">Nama Anda</label>
+          <input id="f-nama" name="nama" type="text" required class="field" placeholder="Budi Santoso" data-i18n-placeholder="form.namaPh">
+        </div>
+        <div>
+          <label for="f-bisnis" class="font-label text-muted block mb-1" data-i18n="form.bisnis">Nama Tempat / Bisnis</label>
+          <input id="f-bisnis" name="bisnis" type="text" required class="field" placeholder="Kopi Braga" data-i18n-placeholder="form.bisnisPh">
+        </div>
+        <div>
+          <label for="f-jenis" class="font-label text-muted block mb-1" data-i18n="form.jenis">Jenis Usaha</label>
+          <select id="f-jenis" name="jenis" required class="field">
+            <option value="Restoran" data-i18n="form.jenis1">Restoran</option>
+            <option value="Kafe / Coffee Shop" data-i18n="form.jenis2">Kafe / Coffee Shop</option>
+            <option value="Rooftop / Bar" data-i18n="form.jenis3">Rooftop / Bar</option>
+            <option value="Rental Unit (PS / Karaoke / Studio)" data-i18n="form.jenis4">Rental Unit (PS / Karaoke / Studio)</option>
+            <option value="Lainnya" data-i18n="form.jenis5">Lainnya</option>
+          </select>
+        </div>
+        <div>
+          <label for="f-wa" class="font-label text-muted block mb-1" data-i18n="form.wa">Nomor WhatsApp</label>
+          <input id="f-wa" name="wa" type="tel" required class="field" placeholder="0812-3456-7890" data-i18n-placeholder="form.waPh">
+        </div>
+        <div>
+          <label for="f-email" class="font-label text-muted block mb-1" data-i18n="form.email">Email (opsional)</label>
+          <input id="f-email" name="email" type="email" class="field" placeholder="nama@bisnis.com" data-i18n-placeholder="form.emailPh">
+        </div>
+        <div>
+          <label for="f-pesan" class="font-label text-muted block mb-1" data-i18n="form.pesan">Ceritakan Kebutuhan Anda</label>
+          <textarea id="f-pesan" name="pesan" rows="4" required class="field resize-none" placeholder="Berapa area yang Anda punya, berapa reservasi per hari, dan apa yang paling merepotkan sekarang?" data-i18n-placeholder="form.pesanPh"></textarea>
+        </div>
+
+        <button type="submit" class="w-full sm:w-auto bg-black text-white text-sm font-medium px-10 py-4 rounded-full hover:bg-neutral-800 transition-colors" data-i18n="form.submit">Kirim via WhatsApp</button>
+        <p class="text-xs leading-relaxed text-muted" data-i18n="form.note">Menekan tombol ini akan membuka WhatsApp dengan pesan yang sudah terisi. Anda tetap bisa membacanya dulu sebelum benar-benar mengirim.</p>
+      </form>
+    </div>
+
+    <!-- Info kontak -->
+    <div class="bg-black text-white rounded-lg p-8 sm:p-10 flex flex-col justify-between gap-10 gsap-card">
+      <div>
+        <p class="font-label text-white/50 mb-6" data-i18n="kontak.infoLabel">Kontak Langsung</p>
+
+        <div class="space-y-6">
+          <div>
+            <div class="font-label text-white/50 mb-2">WhatsApp</div>
+            <!-- TODO: ganti nomor WhatsApp berikut (juga konstanta WA_NUMBER di script bawah) -->
+            <a href="https://wa.me/6281234567890" target="_blank" rel="noopener" class="text-lg font-semibold hover:text-white/70 transition-colors">+62 812-3456-7890</a>
+          </div>
+          <div>
+            <div class="font-label text-white/50 mb-2">Email</div>
+            <!-- TODO: ganti alamat email -->
+            <a href="mailto:halo@seatin.id" class="text-lg font-semibold hover:text-white/70 transition-colors">halo@seatin.id</a>
+          </div>
+          <div>
+            <div class="font-label text-white/50 mb-2" data-i18n="kontak.jam">Jam Balas</div>
+            <div class="text-sm text-white/70" data-i18n="kontak.jamVal">Senin–Jumat, 09.00–18.00 WIB</div>
+          </div>
+        </div>
+      </div>
+
+      <p class="text-sm leading-relaxed text-white/70" data-i18n="kontak.footnote">
+        Lebih suka lihat dulu? Sebutkan saja saat menghubungi, kami akan tunjukkan alur reservasi dan dashboard-nya langsung.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ FOOTER ══════════════════ -->
+<footer class="border-t border-line px-5 sm:px-10 lg:px-20 py-10">
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+    <div>
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAF8AAAA0CAYAAADsf+RsAAAD0UlEQVR4nO2ZW4iVVRTHf47mqEXjvYsXHAu8USAqiGmJUEQ+jGYgVpgiKj75lhS95IOXF4lEH9IHsSiCSALFQPQlRR9LkiIvgzZeYigUrznmiYX/DzYfe5/znTPnODO6frCZc2bvvfbaa++91tr7gOM4juM4juM4juM4juM4juMUoh+10x8YATQBJaATuN8NeU4FhgGbgasyeL5cBw4A87UofYFPgY5c+QMYSS86ISuBOwmjx8quHtb584hO+wu2uwmMbrSCAwq2W1WlMe8B39So02PDgIKuZmOVck8CxxJ1zcBEYJp22c/ABaCrgswW9XtB388Cp4EbuXaD1XZIRMZA4Fl9vgbcLnDiR+VcqOn8j/QdCszQX5tHe73j3ryEW9kNjNNkngeWAj+pbl1EznDgy4Ss+6ozOSEm+7MyMcbKOeDNoM/agm7xgwJuZ5BiQFh3V3M9Gul3R+65biyPDGJupS3RvkW7O+SNgvHiFjAnyKZ+qCLGbH5Ixq9U/gNW1Mv488sM9BewB1gGPJfoP0u7pajyncAE9V2gyRSd9KJeYPzMLdUlYJvPv1RwUPOhO7T7jSeA45F27cB7wPvAL5H6b4OYdCiQ/SPwdRk3dFgntSNx0rqCdPLtBhq/pA1ZF16vcvdm7uPliBHMiJMC2eO0U/I7xxbdeAWYntOnSSeuVKZfPVLNlPHtlG0AxgIfJ2ywpZJRi16EDslgqQyGSMaxT4bL+3+b0O+BkhcCg2U8Cbyoz5bRzJW8bNdanyWRcZt12hrNd8BW6WKLd7GReT5yFXOVVi1SwH0tYrgM2zmv1qIUD1I8C7irgS/ofZgtMuxk/waMaZTxzRCTgVPyt3tUjKd0BD+J9EsFnSs6uim6dA+w+JHHJvu38vjUwvcJirqdmbo4XQbWy9dlfe2ScwT4N9LvROQSZOwFxkvOWJ0g2+Gt+t6qy03ehdg94mm1eYfqmaoF6/+Q3FO3jd9P6VtTcOn5M5cCHon4dluM74GDEZkfKqh1KF09oweubYFRsptoyEidNKv7qILelqHladX/bex36QNMkbLVplpfBRPurKLfdi3AWzWMGT6IVdJ7fzeynTCTCdPhumc7ixPvJOWwia0JgtNs7e4ivKTxDidOTcb5hEvLsIxqZ5n6BXor6jGKGH+THrO26zGqHO1692hTrk/wCDZF2YsF25QxV8oo1+S2liQM+CuwsII+Jbm3tsSYpVoylJ7+Jcty+Gd08bHAVe6FMUVzLlOp9MIY/mp2V5epammR7nRDhuM4juM4juM4juM4juM4juM4juPw6PM/sGTzpGZhDDQAAAAASUVORK5CYII=" alt="SeatIn" width="95" height="52" class="h-10 w-auto mb-2">
+      <p class="text-sm text-muted" data-i18n="footer.tag">Sistem reservasi untuk restoran, kafe, dan tempat sewa per jam.</p>
+    </div>
+
+    <nav class="flex flex-wrap gap-x-7 gap-y-2 text-sm text-muted">
+      <a href="#fitur" class="hover:text-black transition-colors" data-i18n="nav.fitur">Fitur</a>
+      <a href="#cara-kerja" class="hover:text-black transition-colors" data-i18n="nav.cara">Cara Kerja</a>
+      <a href="#faq" class="hover:text-black transition-colors" data-i18n="nav.faq">FAQ</a>
+      <a href="#kontak" class="hover:text-black transition-colors" data-i18n="nav.kontak">Kontak</a>
+    </nav>
+  </div>
+
+  <div class="mt-8 pt-6 border-t border-line text-xs text-muted">
+    <span id="footer-year">© 2026</span> SeatIn. <span data-i18n="footer.rights">Seluruh hak cipta dilindungi.</span>
+  </div>
+</footer>
+
+<script>
+/* ─────────────────────────────────────────────
+   i18n, kamus ID/EN
+   Markup default ditulis dalam Bahasa Indonesia,
+   jadi halaman tetap terbaca kalau JS gagal load.
+   ───────────────────────────────────────────── */
+var I18N = {
+  id: {
+    "meta.title": "SeatIn: Sistem Reservasi untuk Restoran & Kafe",
+    "meta.desc": "SeatIn mengubah reservasi WhatsApp yang berantakan jadi satu sistem rapi: tamu memesan online, uang muka otomatis, notifikasi WhatsApp, dan dashboard antrean untuk tim Anda.",
+
+    "nav.fitur": "Fitur",
+    "nav.cara": "Cara Kerja",
+    "nav.cocok": "Cocok Untuk",
+    "nav.proses": "Proses",
+    "nav.faq": "FAQ",
+    "nav.kontak": "Kontak",
+    "nav.cta": "Konsultasi Gratis",
+
+    "hero.label": "Sistem Reservasi untuk F&B",
+    "hero.title": "Reservasi<br>Penuh, Tanpa<br>Repot.",
+    "hero.sub": "SeatIn mengubah reservasi WhatsApp yang berantakan jadi satu sistem yang rapi. Tamu memesan sendiri secara online, uang muka masuk otomatis, dan tim Anda tinggal memantau semuanya dari satu dashboard.",
+    "hero.cta1": "Konsultasi Gratis",
+    "hero.cta2": "Lihat Fiturnya",
+    "hero.marquee": "Restoran • Kafe • Rooftop • Rental Unit • Fine Dining • Bar",
+
+    "masalah.label": "Masalahnya",
+    "masalah.title": "Reservasi Manual Itu Mahal",
+    "masalah.sub": "Bukan karena Anda kurang rapi, tapi karena alatnya memang tidak dirancang untuk itu.",
+    "masalah.c1.t": "Chat Menumpuk di Satu Ponsel",
+    "masalah.c1.d": "Reservasi masuk lewat DM Instagram, WhatsApp, dan telepon. Satu orang harus membalas semuanya, dan satu chat yang terlewat berarti satu meja kosong.",
+    "masalah.c2.t": "No-Show Tanpa Konsekuensi",
+    "masalah.c2.d": "Tamu memesan lalu tidak datang. Tanpa uang muka, meja yang sudah Anda tahan hilang begitu saja, beserta pendapatannya.",
+    "masalah.c3.t": "Double Booking & Salah Catat",
+    "masalah.c3.d": "Catatan di buku atau spreadsheet gampang bentrok. Dua tamu di meja yang sama pada jam yang sama adalah pengalaman yang sulit diperbaiki.",
+    "masalah.c4.t": "Tidak Ada Data untuk Diputuskan",
+    "masalah.c4.d": "Berapa reservasi bulan ini? Jam berapa paling ramai? Tanpa pencatatan yang rapi, semua keputusan hanya bersandar pada perasaan.",
+
+    "bandingkan.label": "Bandingkan",
+    "bandingkan.title": "Manual vs SeatIn",
+    "bandingkan.sub": "Lihat bedanya berdampingan antara cara manual dan SeatIn.",
+    "bandingkan.col.kriteria": "Kriteria",
+    "bandingkan.col.manual": "Manual (WhatsApp / Buku)",
+    "bandingkan.col.seatin": "SeatIn",
+    "bandingkan.r1.k": "Terima Reservasi",
+    "bandingkan.r1.manual": "Satu per satu, balas chat manual",
+    "bandingkan.r1.seatin": "Tamu isi sendiri, 24/7, otomatis masuk sistem",
+    "bandingkan.r2.k": "Uang Muka",
+    "bandingkan.r2.manual": "Ditagih manual, sering terlewat",
+    "bandingkan.r2.seatin": "Diminta otomatis saat booking, mengunci meja",
+    "bandingkan.r3.k": "Risiko Bentrok Jadwal",
+    "bandingkan.r3.manual": "Rawan dobel booking dari catatan berbeda",
+    "bandingkan.r3.seatin": "Slot terkunci otomatis begitu dikonfirmasi",
+    "bandingkan.r4.k": "Notifikasi ke Tamu",
+    "bandingkan.r4.manual": "Diketik manual satu-satu",
+    "bandingkan.r4.seatin": "Terkirim otomatis dari nomor WhatsApp bisnis",
+    "bandingkan.r5.k": "Rekap & Laporan",
+    "bandingkan.r5.manual": "Dihitung manual dari chat atau buku catatan",
+    "bandingkan.r5.seatin": "Ekspor Excel kapan saja, siap dianalisis",
+    "bandingkan.r6.k": "Kebutuhan Tim",
+    "bandingkan.r6.manual": "Perlu orang standby membalas chat",
+    "bandingkan.r6.seatin": "Tim tinggal konfirmasi atau tolak, sisanya otomatis",
+
+    "fitur.label": "Yang Anda Dapat",
+    "fitur.title": "Satu Sistem, Semua Beres",
+    "fitur.sub": "Halaman reservasi untuk tamu dan dashboard untuk tim Anda, ada dalam satu sistem yang sama.",
+    "fitur.c1.t": "Tamu Booking Sendiri. Anda Tidak Perlu Standby.",
+    "fitur.c1.d": "Tamu memilih tanggal, jam, jumlah orang, dan area (indoor, outdoor, VIP, rooftop) langsung dari ponsel mereka, kapan pun, tanpa menunggu balasan.",
+    "fitur.c2.t": "Menu Dipesan Duluan. Dapur Sudah Siap.",
+    "fitur.c2.d": "Tamu bisa memesan makanan dan minuman di muka, jadi pesanan siap saat mereka tiba. Bisa dimatikan bila tidak cocok dengan gaya layanan Anda.",
+    "fitur.c3.t": "DP Masuk Otomatis. No-Show Turun.",
+    "fitur.c3.d": "Minta DP untuk mengunci reservasi, bisa persentase dari total, nominal tetap, atau per orang. Cara paling ampuh menekan angka no-show.",
+    "fitur.c4.t": "Notifikasi Jalan Sendiri. Chat Anda Kosong.",
+    "fitur.c4.d": "Pengajuan, menunggu DP, dikonfirmasi, ditolak beserta alasannya, sampai ucapan terima kasih setelah selesai, semua terkirim otomatis dari nomor bisnis Anda.",
+    "fitur.c5.t": "Satu Dashboard. Semua Antrean Beres.",
+    "fitur.c5.d": "Konfirmasi atau tolak dalam satu klik, tambahkan reservasi manual untuk tamu yang menelepon, ekspor ke Excel, dan telusuri linimasa siapa mengubah apa. Hak akses diatur per staf.",
+    "fitur.c6.t": "Ubah Sendiri. Tanpa Kode, Tanpa Developer.",
+    "fitur.c6.d": "Nama dan identitas bisnis, jam buka, daftar area, slot waktu, aturan DP, hari tutup, semua bisa Anda ubah sendiri dari halaman Pengaturan.",
+
+    "cara.label": "Cara Kerja",
+    "cara.title": "Dari Ketuk Sampai Duduk",
+    "cara.s1.t": "Tamu Pilih Jadwal",
+    "cara.s1.d": "Membuka halaman reservasi Anda, lalu memilih tanggal, jam, jumlah tamu, dan area yang diinginkan.",
+    "cara.s2.t": "Pre-Order & Bayar DP",
+    "cara.s2.d": "Tamu menambahkan menu bila perlu, lalu mentransfer uang muka sesuai aturan yang Anda tetapkan.",
+    "cara.s3.t": "Konfirmasi Otomatis",
+    "cara.s3.d": "Begitu Anda menekan konfirmasi, WhatsApp berisi detail reservasi langsung masuk ke ponsel tamu.",
+    "cara.s4.t": "Tim Anda Pegang Kendali",
+    "cara.s4.d": "Semua reservasi tampil rapi di dashboard, siap dikonfirmasi, ditolak, atau diekspor menjadi laporan.",
+
+    "cocok.label": "Cocok Untuk",
+    "cocok.title": "Bukan Cuma Restoran",
+    "cocok.sub": "Sistem yang sama bisa mengatur meja, area, atau unit sewa per jam.",
+    "cocok.c1.t": "Restoran & Fine Dining",
+    "cocok.c1.d": "Atur meja per area, kunci jam ramai dengan uang muka, dan siapkan pesanan sebelum tamu duduk.",
+    "cocok.c2.t": "Kafe & Coffee Shop",
+    "cocok.c2.d": "Reservasi ringan tanpa pre-order, atau aktifkan menu bila Anda ingin pesanan sudah siap lebih dulu.",
+    "cocok.c3.t": "Rooftop & Private Area",
+    "cocok.c3.d": "Area terbatas dengan kapasitas minimum dan maksimum sendiri, plus aturan pembatalan yang Anda tentukan.",
+    "cocok.c4.t": "Rental Unit per Jam",
+    "cocok.c4.d": "PlayStation, karaoke, atau studio. Sistem yang sama bisa mengelola unit sewa, bukan hanya meja.",
+
+    "proses.label": "Proses Setup",
+    "proses.title": "Siap Pakai, Bukan Proyek Bertahun",
+    "proses.sub": "Anda tidak perlu tim IT. Cukup ceritakan tempat Anda lewat satu sesi meeting singkat, sisanya kami yang kerjakan.",
+    "proses.s1.t": "Meeting Kebutuhan",
+    "proses.s1.d": "Kami meeting dengan Anda untuk memahami use case tempat Anda: daftar area, jam operasional, dan aturan booking yang sesuai.",
+    "proses.s2.t": "Setup & Kustomisasi",
+    "proses.s2.d": "Kami menyiapkan sistem, memasang identitas Anda, dan menyambungkan nomor WhatsApp bisnis.",
+    "proses.s3.t": "Training Tim",
+    "proses.s3.d": "Sesi singkat untuk staf: membaca antrean, mengonfirmasi, menolak, dan menarik laporan.",
+    "proses.s4.t": "Go-Live",
+    "proses.s4.d": "Halaman reservasi Anda tayang, dan kami tetap mendampingi setelah peluncuran.",
+
+    "dukungan.label": "Dukungan Personal",
+    "dukungan.title": "Anda Tidak Sendirian Setelah Go-Live",
+    "dukungan.sub": "Kami membangun SeatIn sebagai tim kecil yang turun tangan langsung, bukan perusahaan besar dengan lapisan tiket support.",
+    "dukungan.c1.t": "Obrolan Langsung, Bukan Tiket Berjenjang",
+    "dukungan.c1.d": "Pertanyaan Anda dijawab oleh orang yang membangun sistemnya sendiri, bukan diteruskan dari staf ke staf.",
+    "dukungan.c2.t": "Satu Nomor WhatsApp untuk Semuanya",
+    "dukungan.c2.d": "Konsultasi awal, kendala teknis, sampai permintaan kustomisasi kecil, semua lewat nomor yang sudah Anda kenal, bukan portal tiket baru.",
+    "dukungan.c3.t": "Pendampingan Justru Dimulai Setelah Anda Live",
+    "dukungan.c3.d": "Banyak vendor sistem ramai sebelum closing dan sepi sesudahnya. Kami sebaliknya: mendampingi serius justru setelah sistem Anda berjalan.",
+
+    "cta.title": "Berhenti Mengurus<br>Reservasi Manual.",
+    "cta.sub": "Ceritakan tempat Anda, dan kami tunjukkan seperti apa SeatIn saat sudah dipasang dengan nama, area, dan menu Anda sendiri.",
+    "cta.btn": "Mulai Konsultasi",
+
+    "faq.label": "Pertanyaan Umum",
+    "faq.title": "Yang Sering Ditanya",
+    "faq.q1": "Berapa lama sampai sistem saya bisa dipakai?",
+    "faq.a1": "Umumnya satu sampai dua minggu setelah meeting kebutuhan selesai, tergantung banyaknya area dan menu yang perlu dimasukkan.",
+    "faq.q2": "Apakah saya perlu paham teknologi?",
+    "faq.a2": "Tidak. Semua pengaturan harian (jam buka, area, slot waktu, aturan DP, hari tutup) diubah lewat halaman Pengaturan biasa, tanpa menyentuh kode.",
+    "faq.q3": "Nomor WhatsApp siapa yang dipakai untuk notifikasi?",
+    "faq.a3": "Nomor bisnis Anda sendiri. Kami menyambungkannya ke sistem saat setup, jadi tamu menerima pesan dari nama yang sudah mereka kenal.",
+    "faq.q4": "Bagaimana kalau saya tidak ingin meminta uang muka?",
+    "faq.a4": "Boleh dimatikan. Uang muka bersifat opsional, begitu juga pre-order menu. Sistemnya menyesuaikan gaya layanan Anda, bukan sebaliknya.",
+    "faq.q5": "Apakah data reservasi saya bercampur dengan bisnis lain?",
+    "faq.a5": "Tidak. Setiap klien mendapat deployment dan basis data sendiri, jadi data tamu Anda berdiri terpisah dari klien mana pun.",
+    "faq.q6": "Bisakah datanya diekspor untuk laporan?",
+    "faq.a6": "Bisa. Antrean reservasi dapat diekspor menjadi berkas Excel lengkap dengan tanggal, area, status, dan nilai transaksi.",
+
+    "kontak.label": "Mulai Dari Sini",
+    "kontak.title": "Ceritakan Tempat Anda",
+    "kontak.sub": "Isi formulir singkat ini. Kami membalas lewat WhatsApp untuk membahas kebutuhan tempat Anda, gratis dan tanpa komitmen.",
+    "kontak.infoLabel": "Kontak Langsung",
+    "kontak.jam": "Jam Balas",
+    "kontak.jamVal": "Senin–Jumat, 09.00–18.00 WIB",
+    "kontak.footnote": "Lebih suka lihat dulu? Sebutkan saja saat menghubungi, kami akan tunjukkan alur reservasi dan dashboard-nya langsung.",
+
+    "form.nama": "Nama Anda",
+    "form.namaPh": "Budi Santoso",
+    "form.bisnis": "Nama Tempat / Bisnis",
+    "form.bisnisPh": "Kopi Braga",
+    "form.jenis": "Jenis Usaha",
+    "form.jenis1": "Restoran",
+    "form.jenis2": "Kafe / Coffee Shop",
+    "form.jenis3": "Rooftop / Bar",
+    "form.jenis4": "Rental Unit (PS / Karaoke / Studio)",
+    "form.jenis5": "Lainnya",
+    "form.wa": "Nomor WhatsApp",
+    "form.waPh": "0812-3456-7890",
+    "form.email": "Email (opsional)",
+    "form.emailPh": "nama@bisnis.com",
+    "form.pesan": "Ceritakan Kebutuhan Anda",
+    "form.pesanPh": "Berapa area yang Anda punya, berapa reservasi per hari, dan apa yang paling merepotkan sekarang?",
+    "form.submit": "Kirim via WhatsApp",
+    "form.note": "Menekan tombol ini akan membuka WhatsApp dengan pesan yang sudah terisi. Anda tetap bisa membacanya dulu sebelum benar-benar mengirim.",
+
+    "footer.tag": "Sistem reservasi untuk restoran, kafe, dan tempat sewa per jam.",
+    "footer.rights": "Seluruh hak cipta dilindungi.",
+
+    "wa.intro": "Halo SeatIn, saya tertarik dengan sistem reservasinya.",
+    "wa.nama": "Nama",
+    "wa.bisnis": "Nama tempat",
+    "wa.jenis": "Jenis usaha",
+    "wa.wa": "WhatsApp",
+    "wa.email": "Email",
+    "wa.pesan": "Kebutuhan"
+  },
+
+  en: {
+    "meta.title": "SeatIn: Reservation System for Restaurants & Cafés",
+    "meta.desc": "SeatIn turns messy WhatsApp reservations into one clean system: guests book online, deposits are collected automatically, WhatsApp confirmations go out, and your team runs the queue from one dashboard.",
+
+    "nav.fitur": "Features",
+    "nav.cara": "How It Works",
+    "nav.cocok": "Who It's For",
+    "nav.proses": "Process",
+    "nav.faq": "FAQ",
+    "nav.kontak": "Contact",
+    "nav.cta": "Free Consultation",
+
+    "hero.label": "Reservation System for F&B",
+    "hero.title": "A Full House,<br>Without The<br>Chaos.",
+    "hero.sub": "SeatIn turns messy WhatsApp reservations into one clean system. Guests book online by themselves, deposits land automatically, and your team runs everything from a single dashboard.",
+    "hero.cta1": "Free Consultation",
+    "hero.cta2": "See The Features",
+    "hero.marquee": "Restaurants • Cafés • Rooftops • Rental Units • Fine Dining • Bars",
+
+    "masalah.label": "The Problem",
+    "masalah.title": "Manual Booking Is Expensive",
+    "masalah.sub": "It is not that you are disorganised. The tools were simply never built for this.",
+    "masalah.c1.t": "Every Chat On One Phone",
+    "masalah.c1.d": "Bookings arrive through Instagram DMs, WhatsApp, and phone calls. One person has to answer them all, and one missed message means one empty table.",
+    "masalah.c2.t": "No-Shows With No Cost",
+    "masalah.c2.d": "A guest books and never turns up. Without a deposit, the table you held disappears, and so does the revenue that came with it.",
+    "masalah.c3.t": "Double Bookings & Lost Notes",
+    "masalah.c3.d": "Notebooks and spreadsheets clash easily. Two guests at the same table at the same hour is a night that's hard to recover from.",
+    "masalah.c4.t": "No Data To Decide On",
+    "masalah.c4.d": "How many bookings this month? Which hours fill up first? Without clean records, every decision rests on a hunch.",
+
+    "bandingkan.label": "Compare",
+    "bandingkan.title": "Manual vs SeatIn",
+    "bandingkan.sub": "See the difference side by side between the manual way and SeatIn.",
+    "bandingkan.col.kriteria": "Criteria",
+    "bandingkan.col.manual": "Manual (WhatsApp / Notebook)",
+    "bandingkan.col.seatin": "SeatIn",
+    "bandingkan.r1.k": "Taking Bookings",
+    "bandingkan.r1.manual": "One by one, answering chats manually",
+    "bandingkan.r1.seatin": "Guests book themselves, 24/7, straight into the system",
+    "bandingkan.r2.k": "Deposits",
+    "bandingkan.r2.manual": "Chased manually, often skipped",
+    "bandingkan.r2.seatin": "Requested automatically at booking, locking the table",
+    "bandingkan.r3.k": "Double-Booking Risk",
+    "bandingkan.r3.manual": "Easy to clash across different notebooks",
+    "bandingkan.r3.seatin": "Slots lock automatically the moment you confirm",
+    "bandingkan.r4.k": "Guest Notifications",
+    "bandingkan.r4.manual": "Typed out one at a time",
+    "bandingkan.r4.seatin": "Sent automatically from your business WhatsApp number",
+    "bandingkan.r5.k": "Reports & Records",
+    "bandingkan.r5.manual": "Tallied by hand from chats or a notebook",
+    "bandingkan.r5.seatin": "Export to Excel any time, ready to analyse",
+    "bandingkan.r6.k": "Staffing Needs",
+    "bandingkan.r6.manual": "Someone has to stand by answering chats",
+    "bandingkan.r6.seatin": "Your team just confirms or declines, the rest runs itself",
+
+    "fitur.label": "What You Get",
+    "fitur.title": "One System, Everything Handled",
+    "fitur.sub": "A booking page for your guests and a dashboard for your team, all inside the same system.",
+    "fitur.c1.t": "Guests Book Themselves. You Don't Have To Answer.",
+    "fitur.c1.d": "Guests pick a date, time, party size, and area (indoor, outdoor, VIP, rooftop) straight from their phone, any hour, with no need to wait for a reply.",
+    "fitur.c2.t": "Menu Ordered Ahead. Kitchen Already Ready.",
+    "fitur.c2.d": "Guests can order food and drinks ahead so everything is ready when they arrive. Switch it off if it doesn't suit your service style.",
+    "fitur.c3.t": "Deposits Collect Themselves. No-Shows Drop.",
+    "fitur.c3.d": "Ask for a deposit to lock a booking, whether that is a percentage of the total, a fixed amount, or per person. It is the most effective way to cut no-shows.",
+    "fitur.c4.t": "Notifications Run Themselves. Your Inbox Stays Empty.",
+    "fitur.c4.d": "Request received, awaiting deposit, confirmed, declined with a reason, and a thank-you once they have dined. All of it sent automatically from your own business number.",
+    "fitur.c5.t": "One Dashboard. Every Booking Handled.",
+    "fitur.c5.d": "Confirm or decline in one click, add walk-in bookings by hand, export to Excel, and trace who changed what. Permissions are set per staff member.",
+    "fitur.c6.t": "Change It Yourself. No Code, No Developer.",
+    "fitur.c6.d": "Business name and identity, opening hours, areas, time slots, deposit rules, closed days. You change all of it yourself from the Settings page.",
+
+    "cara.label": "How It Works",
+    "cara.title": "From Tap To Table",
+    "cara.s1.t": "Guest Picks A Slot",
+    "cara.s1.d": "They open your booking page and choose a date, time, party size, and the area they want.",
+    "cara.s2.t": "Pre-Order & Deposit",
+    "cara.s2.d": "They add menu items if you offer it, then transfer the deposit under the rules you've set.",
+    "cara.s3.t": "Automatic Confirmation",
+    "cara.s3.d": "The moment you confirm, a WhatsApp message with the full booking details lands on the guest's phone.",
+    "cara.s4.t": "Your Team Stays In Control",
+    "cara.s4.d": "Every booking sits in one dashboard, ready to confirm, decline, or export as a report.",
+
+    "cocok.label": "Who It's For",
+    "cocok.title": "Not Just Restaurants",
+    "cocok.sub": "The same system can manage tables, areas, or rental units booked by the hour.",
+    "cocok.c1.t": "Restaurants & Fine Dining",
+    "cocok.c1.d": "Manage tables per area, protect peak hours with a deposit, and have orders ready before guests sit down.",
+    "cocok.c2.t": "Cafés & Coffee Shops",
+    "cocok.c2.d": "Keep booking light with no pre-order, or switch the menu on when you'd rather have orders queued in advance.",
+    "cocok.c3.t": "Rooftops & Private Areas",
+    "cocok.c3.d": "Limited areas with their own minimum and maximum capacity, plus the cancellation rules you decide on.",
+    "cocok.c4.t": "Hourly Rental Units",
+    "cocok.c4.d": "PlayStation, karaoke, or studio. The same system can manage rental units instead of tables.",
+
+    "proses.label": "Setup Process",
+    "proses.title": "Ready To Use, Not A Multi-Year Project",
+    "proses.sub": "You don't need an IT team. Just walk us through your venue in one short meeting, and we handle the rest.",
+    "proses.s1.t": "Requirements Meeting",
+    "proses.s1.d": "We meet with you to understand your venue's use case: your areas, opening hours, and the booking rules that fit.",
+    "proses.s2.t": "Setup & Customisation",
+    "proses.s2.d": "We prepare the system, apply your identity, and connect your business WhatsApp number.",
+    "proses.s3.t": "Team Training",
+    "proses.s3.d": "A short session for your staff: reading the queue, confirming, declining, and pulling reports.",
+    "proses.s4.t": "Go-Live",
+    "proses.s4.d": "Your booking page goes public, and we stay with you after launch.",
+
+    "dukungan.label": "Personal Support",
+    "dukungan.title": "You're Not On Your Own After Go-Live",
+    "dukungan.sub": "We built SeatIn as a small team that shows up directly, not a large company with layers of support tickets.",
+    "dukungan.c1.t": "A Direct Conversation, Not A Ticket Queue",
+    "dukungan.c1.d": "Your questions get answered by the person who built the system, not passed from agent to agent.",
+    "dukungan.c2.t": "One WhatsApp Number For Everything",
+    "dukungan.c2.d": "Initial consultation, technical hiccups, small customisation requests. All through the number you already know, not a new support portal.",
+    "dukungan.c3.t": "Support Starts For Real After You Go Live",
+    "dukungan.c3.d": "Many vendors are attentive before you sign and quiet after. We work the other way: hands-on support ramps up once your system is running.",
+
+    "cta.title": "Stop Running<br>Bookings By Hand.",
+    "cta.sub": "Tell us about your venue and we'll show you what SeatIn looks like carrying your own name, areas, and menu.",
+    "cta.btn": "Start A Conversation",
+
+    "faq.label": "Common Questions",
+    "faq.title": "Frequently Asked",
+    "faq.q1": "How long until my system is live?",
+    "faq.a1": "Usually one to two weeks once the requirements meeting is complete, depending on how many areas and menu items need to be entered.",
+    "faq.q2": "Do I need to be technical?",
+    "faq.a2": "No. Every day-to-day setting (opening hours, areas, time slots, deposit rules, closed days) is changed from an ordinary Settings page, never in code.",
+    "faq.q3": "Whose WhatsApp number sends the notifications?",
+    "faq.a3": "Your own business number. We connect it during setup, so guests hear from a name they already recognise.",
+    "faq.q4": "What if I don't want to ask for deposits?",
+    "faq.a4": "Turn it off. Deposits are optional, and so is menu pre-ordering. The system adapts to your service style, not the other way round.",
+    "faq.q5": "Is my booking data mixed with other businesses?",
+    "faq.a5": "No. Each client gets their own deployment and database, so your guest data stands entirely apart from anyone else's.",
+    "faq.q6": "Can the data be exported for reporting?",
+    "faq.a6": "Yes. The booking queue exports to an Excel file with dates, areas, statuses, and transaction values.",
+
+    "kontak.label": "Start Here",
+    "kontak.title": "Tell Us About Your Venue",
+    "kontak.sub": "Fill in this short form. We will reply over WhatsApp to talk through what your venue needs, free and with no commitment.",
+    "kontak.infoLabel": "Direct Contact",
+    "kontak.jam": "Reply Hours",
+    "kontak.jamVal": "Monday–Friday, 09.00–18.00 WIB",
+    "kontak.footnote": "Rather see it first? Just say so when you get in touch, and we will walk you through the booking flow and the dashboard.",
+
+    "form.nama": "Your Name",
+    "form.namaPh": "Budi Santoso",
+    "form.bisnis": "Venue / Business Name",
+    "form.bisnisPh": "Kopi Braga",
+    "form.jenis": "Business Type",
+    "form.jenis1": "Restaurant",
+    "form.jenis2": "Café / Coffee Shop",
+    "form.jenis3": "Rooftop / Bar",
+    "form.jenis4": "Rental Unit (PS / Karaoke / Studio)",
+    "form.jenis5": "Other",
+    "form.wa": "WhatsApp Number",
+    "form.waPh": "0812-3456-7890",
+    "form.email": "Email (optional)",
+    "form.emailPh": "name@business.com",
+    "form.pesan": "Tell Us What You Need",
+    "form.pesanPh": "How many areas do you have, how many bookings a day, and what's the biggest headache right now?",
+    "form.submit": "Send via WhatsApp",
+    "form.note": "This opens WhatsApp with your message already filled in. You can still read it over before actually sending.",
+
+    "footer.tag": "Reservation system for restaurants, cafés, and hourly rental venues.",
+    "footer.rights": "All rights reserved.",
+
+    "wa.intro": "Hi SeatIn, I'm interested in your reservation system.",
+    "wa.nama": "Name",
+    "wa.bisnis": "Venue",
+    "wa.jenis": "Business type",
+    "wa.wa": "WhatsApp",
+    "wa.email": "Email",
+    "wa.pesan": "Needs"
+  }
+};
+
+/* ─────────── Language switching ─────────── */
+var LANG_KEY = "seatin-lang";
+var currentLang = "id";
+
+function t(key) {
+  var dict = I18N[currentLang] || I18N.id;
+  return dict[key] != null ? dict[key] : (I18N.id[key] || "");
+}
+
+function applyLang(lang) {
+  if (!I18N[lang]) lang = "id";
+  currentLang = lang;
+  var dict = I18N[lang];
+
+  document.documentElement.lang = lang;
+
+  document.querySelectorAll("[data-i18n]").forEach(function (el) {
+    var v = dict[el.getAttribute("data-i18n")];
+    if (v != null) el.textContent = v;
+  });
+  document.querySelectorAll("[data-i18n-html]").forEach(function (el) {
+    var v = dict[el.getAttribute("data-i18n-html")];
+    if (v != null) el.innerHTML = v;
+  });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(function (el) {
+    var v = dict[el.getAttribute("data-i18n-placeholder")];
+    if (v != null) el.setAttribute("placeholder", v);
+  });
+
+  if (dict["meta.title"]) document.title = dict["meta.title"];
+  var md = document.getElementById("meta-desc");
+  if (md && dict["meta.desc"]) md.setAttribute("content", dict["meta.desc"]);
+
+  document.querySelectorAll(".lang-btn").forEach(function (btn) {
+    btn.classList.toggle("is-active", btn.getAttribute("data-lang") === lang);
+  });
+
+  try { localStorage.setItem(LANG_KEY, lang); } catch (e) { /* private mode */ }
+}
+
+document.querySelectorAll(".lang-btn").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    applyLang(btn.getAttribute("data-lang"));
+  });
+});
+
+(function initLang() {
+  var saved = null;
+  try { saved = localStorage.getItem(LANG_KEY); } catch (e) { /* private mode */ }
+  applyLang(saved || "id");
+})();
+
+/* ─────────── Mobile menu ─────────── */
+(function initMenu() {
+  var btn = document.getElementById("menu-btn");
+  var menu = document.getElementById("mobile-menu");
+  if (!btn || !menu) return;
+
+  function close() {
+    menu.classList.add("hidden");
+    menu.classList.remove("flex");
+    btn.setAttribute("aria-expanded", "false");
+  }
+
+  btn.addEventListener("click", function () {
+    var open = menu.classList.contains("hidden");
+    menu.classList.toggle("hidden", !open);
+    menu.classList.toggle("flex", open);
+    btn.setAttribute("aria-expanded", String(open));
+  });
+
+  menu.querySelectorAll("a").forEach(function (a) {
+    a.addEventListener("click", close);
+  });
+})();
+
+/* ─────────── Contact form → WhatsApp deep link ─────────── */
+/* TODO: ganti dengan nomor WhatsApp tujuan (format internasional, tanpa + dan tanpa spasi) */
+var WA_NUMBER = "6281234567890";
+
+(function initForm() {
+  var form = document.getElementById("contact-form");
+  if (!form) return;
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    var val = function (id) {
+      var el = document.getElementById(id);
+      return el ? el.value.trim() : "";
+    };
+
+    var selText = function (id) {
+      var s = document.getElementById(id);
+      return s && s.selectedIndex >= 0 ? s.options[s.selectedIndex].textContent.trim() : "";
+    };
+
+    var lines = [
+      t("wa.intro"),
+      "",
+      t("wa.nama") + ": " + val("f-nama"),
+      t("wa.bisnis") + ": " + val("f-bisnis"),
+      t("wa.jenis") + ": " + selText("f-jenis"),
+      t("wa.wa") + ": " + val("f-wa"),
+    ];
+
+    if (val("f-email")) lines.push(t("wa.email") + ": " + val("f-email"));
+
+    lines.push("", t("wa.pesan") + ": " + val("f-pesan"));
+
+    var url = "https://wa.me/" + WA_NUMBER + "?text=" + encodeURIComponent(lines.join("\n"));
+    window.open(url, "_blank", "noopener");
+  });
+})();
+
+/* ─────────── Garis progres scroll di header ───────────
+   Fallback murni JS (instan) dipakai selalu; kalau GSAP berhasil dimuat,
+   blok GSAP di bawah menimpa `setScrollProgress` dengan versi gsap.quickTo()
+   yang halus (di-set lewat window agar bisa dijangkau dari sana).
+*/
+window.setScrollProgress = null;
+
+(function initScrollProgress() {
+  var bar = document.getElementById("scroll-progress");
+  if (!bar) return;
+  var ticking = false;
+
+  function rawSet(pct) {
+    bar.style.transform = "scaleX(" + pct + ")";
+  }
+
+  function update() {
+    var doc = document.documentElement;
+    var max = doc.scrollHeight - doc.clientHeight;
+    var pct = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+    (window.setScrollProgress || rawSet)(pct);
+    ticking = false;
+  }
+
+  window.addEventListener("scroll", function () {
+    if (!ticking) {
+      requestAnimationFrame(update);
+      ticking = true;
+    }
+  }, { passive: true });
+
+  update();
+})();
+
+/* ─────────── Footer year ─────────── */
+(function initYear() {
+  var el = document.getElementById("footer-year");
+  if (el) el.textContent = "© " + new Date().getFullYear();
+})();
+
+/* ─────────── GSAP: entrance + scroll reveal + micro-interaksi ───────────
+   Dijalankan pada window load supaya script GSAP yang ber-`defer`
+   sudah selesai dimuat. Semua tween masuk lewat gsap.from(), jadi kalau
+   GSAP gagal dimuat konten tetap terlihat penuh (tidak pernah nyangkut
+   di state "belum muncul").
+*/
+window.addEventListener("load", function () {
+  if (!window.gsap || !window.ScrollTrigger) return;
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  gsap.matchMedia().add("(prefers-reduced-motion: no-preference)", function () {
+    var tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+    tl.from(".gsap-hero-label", { y: 16, autoAlpha: 0, duration: 0.5 })
+      .from(".gsap-hero-title", { y: 34, autoAlpha: 0, duration: 0.8 }, "-=0.25")
+      .from(".gsap-hero-sub", { y: 20, autoAlpha: 0, duration: 0.6 }, "-=0.5")
+      .from(".gsap-hero-cta", { y: 20, autoAlpha: 0, duration: 0.6 }, "-=0.45")
+      .from(".gsap-hero-img", { y: 28, autoAlpha: 0, duration: 0.8 }, "-=0.4");
+
+    gsap.utils.toArray(".gsap-bar, .gsap-head").forEach(function (el) {
+      gsap.from(el, {
+        y: 22,
+        autoAlpha: 0,
+        duration: 0.6,
+        ease: "power3.out",
+        scrollTrigger: { trigger: el, start: "top 88%", once: true },
+      });
+    });
+
+    gsap.utils.toArray("section").forEach(function (section) {
+      var cards = section.querySelectorAll(".gsap-card");
+      if (!cards.length) return;
+      gsap.from(cards, {
+        y: 26,
+        autoAlpha: 0,
+        duration: 0.6,
+        ease: "power3.out",
+        stagger: { each: 0.08, from: "start" },
+        scrollTrigger: { trigger: section, start: "top 78%", once: true },
+      });
+    });
+
+    // Angka watermark section "muncul" seperti stempel begitu discroll ke area-nya
+    gsap.utils.toArray(".sec-num").forEach(function (el) {
+      gsap.from(el, {
+        scale: 0.82,
+        autoAlpha: 0,
+        duration: 0.9,
+        ease: "power3.out",
+        transformOrigin: "right top",
+        scrollTrigger: { trigger: el, start: "top 85%", once: true },
+      });
+    });
+
+    // Garis progres scroll di header: halus lewat quickTo, bukan lompat mentah
+    var progressBar = document.getElementById("scroll-progress");
+    if (progressBar) {
+      window.setScrollProgress = gsap.quickTo(progressBar, "scaleX", {
+        duration: 0.3,
+        ease: "power2.out",
+      });
+    }
+
+    // Accordion FAQ: ambil alih toggle native <details> supaya tinggi &
+    // fade-nya animasi mulus, bukan snap instan. Fallback tanpa GSAP tetap
+    // native <details> yang instan (lihat CSS .faq-item, tidak pernah rusak).
+    document.body.classList.add("gsap-faq-ready");
+    gsap.utils.toArray(".faq-item").forEach(function (item) {
+      var summary = item.querySelector("summary");
+      var panel = item.querySelector(".faq-panel");
+      if (!summary || !panel) return;
+
+      var startsOpen = item.hasAttribute("open");
+      gsap.set(panel, { height: startsOpen ? "auto" : 0, autoAlpha: startsOpen ? 1 : 0, overflow: "hidden" });
+
+      summary.addEventListener("click", function (e) {
+        e.preventDefault();
+        if (item.classList.contains("is-animating")) return;
+
+        var opening = !item.hasAttribute("open");
+        item.classList.add("is-animating");
+
+        if (opening) {
+          item.setAttribute("open", "");
+          gsap.fromTo(panel, { height: 0, autoAlpha: 0 }, {
+            height: "auto",
+            autoAlpha: 1,
+            duration: 0.35,
+            ease: "power2.out",
+            onComplete: function () { item.classList.remove("is-animating"); },
+          });
+        } else {
+          gsap.to(panel, {
+            height: 0,
+            autoAlpha: 0,
+            duration: 0.3,
+            ease: "power2.in",
+            onComplete: function () {
+              item.removeAttribute("open");
+              item.classList.remove("is-animating");
+            },
+          });
+        }
+      });
+    });
+  });
+});
+</script>
+
+</body>
+</html>
