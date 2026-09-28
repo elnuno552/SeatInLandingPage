@@ -8,4 +8,5 @@ RUN npm run build
 FROM nginx:alpine
 COPY --from=builder /app/index.html /usr/share/nginx/html/index.html
 COPY --from=builder /app/assets /usr/share/nginx/html/assets
+COPY --from=builder /app/favicon /usr/share/nginx/html/favicon
 EXPOSE 80
