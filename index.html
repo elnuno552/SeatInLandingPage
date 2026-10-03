@@ -59,9 +59,9 @@
     }
     .font-label {
       font-family: "JetBrains Mono", monospace;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 500;
-      letter-spacing: 0.18em;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
     }
     .step-num {
@@ -91,20 +91,6 @@
     .lang-btn.is-active { background: #000; color: #fff; }
 
     /* ═══════════════ ENHANCEMENT LAYER ═══════════════ */
-
-    /* Grain halus di seluruh halaman, memberi tekstur cetak tanpa mengganggu kontras */
-    /* absolute (bukan fixed) supaya ikut scroll bareng konten, bukan di-blend ulang tiap frame scroll */
-    body { position: relative; }
-    body::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      z-index: 60;
-      pointer-events: none;
-      opacity: 0.035;
-      mix-blend-mode: multiply;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    }
 
     /* Seleksi teks & scrollbar tetap monokrom, bukan biru default browser */
     ::selection { background: #000; color: #fff; }
@@ -163,16 +149,6 @@
     .corner-ticks::before { top: -10px; left: -10px; }
     .corner-ticks::after { bottom: -10px; right: -10px; }
 
-    /* Tekstur garis diagonal halus, dipakai di placeholder & band gelap */
-    .texture-light { background-image: repeating-linear-gradient(135deg, rgba(0,0,0,0.035) 0 1px, transparent 1px 14px); }
-    .texture-dark { background-image: repeating-linear-gradient(135deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 14px); }
-
-    /* Ticker berjalan di hero */
-    .marquee-wrap { overflow: hidden; }
-    .marquee-track { display: flex; width: max-content; animation: marquee 24s linear infinite; }
-    .marquee-wrap:hover .marquee-track { animation-play-state: paused; }
-    @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-
     /* Tombol pil: tekanan halus saat aktif */
     a.rounded-full, button.rounded-full {
       transition: transform 0.15s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
@@ -186,8 +162,6 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .marquee-track { animation: none; }
-      body::after { display: none; }
     }
 
     /* Accordion FAQ, pakai <details>/<summary> native supaya tetap bisa dibuka/tutup tanpa JS */
@@ -215,6 +189,21 @@
     .faq-item summary { padding-right: 2px; }
     .faq-item p { animation: faq-fade 0.35s ease; }
     @keyframes faq-fade { from { opacity: 0; } to { opacity: 1; } }
+
+    /* Lightbox gambar di section Tampilan */
+    .zoom-btn { cursor: zoom-in; padding: 0; background: none; border: 0; }
+    .zoom-btn img { transition: border-color 0.2s ease; }
+    .zoom-btn:hover img { border-color: #000; }
+    #lightbox { border: 0; padding: 0; background: transparent; max-width: 100vw; max-height: 100dvh; width: 100%; height: 100%; }
+    #lightbox::backdrop { background: rgba(0,0,0,0.82); }
+    #lightbox .lb-wrap { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 56px 16px 24px; box-sizing: border-box; }
+    #lightbox .lb-scroll { max-width: 100%; max-height: 100%; overflow: auto; border-radius: 8px; background: #fff; }
+    #lightbox img { display: block; max-width: none; width: auto; height: auto; max-height: calc(100dvh - 96px); }
+    @media (min-width: 640px) { #lightbox img { max-width: 100%; } }
+    @media (max-width: 639px) { #lightbox img[data-wide] { width: 720px; max-height: none; } }
+    #lightbox .lb-close { position: absolute; top: 12px; right: 16px; width: 40px; height: 40px; border-radius: 9999px; background: #fff; color: #000; font-size: 22px; line-height: 1; border: 0; cursor: pointer; }
+    #lightbox .lb-cap { position: absolute; left: 16px; right: 72px; top: 20px; color: #fff; font-size: 13px; }
+
     @media (prefers-reduced-motion: reduce) {
       .faq-item p { animation: none; }
     }
@@ -235,6 +224,7 @@
 
     <nav class="hidden lg:flex items-center gap-5 xl:gap-8 text-sm text-muted">
       <a href="#fitur" class="hover:text-black transition-colors" data-i18n="nav.fitur">Fitur</a>
+      <a href="#tampilan" class="hover:text-black transition-colors" data-i18n="nav.tampilan">Tampilan</a>
       <a href="#cara-kerja" class="hover:text-black transition-colors" data-i18n="nav.cara">Cara Kerja</a>
       <a href="#cocok" class="hover:text-black transition-colors" data-i18n="nav.cocok">Cocok Untuk</a>
       <a href="#proses" class="hover:text-black transition-colors" data-i18n="nav.proses">Proses</a>
@@ -259,6 +249,7 @@
 
   <div id="mobile-menu" class="hidden lg:hidden border-t border-line bg-white px-5 sm:px-10 py-4 flex-col gap-1">
     <a href="#fitur" class="py-2.5 text-sm text-muted hover:text-black" data-i18n="nav.fitur">Fitur</a>
+    <a href="#tampilan" class="py-2.5 text-sm text-muted hover:text-black" data-i18n="nav.tampilan">Tampilan</a>
     <a href="#cara-kerja" class="py-2.5 text-sm text-muted hover:text-black" data-i18n="nav.cara">Cara Kerja</a>
     <a href="#cocok" class="py-2.5 text-sm text-muted hover:text-black" data-i18n="nav.cocok">Cocok Untuk</a>
     <a href="#proses" class="py-2.5 text-sm text-muted hover:text-black" data-i18n="nav.proses">Proses</a>
@@ -285,14 +276,11 @@
     </div>
   </div>
 
-  <div class="marquee-wrap border-y border-line mb-10 sm:mb-12 gsap-hero-cta">
-    <div class="marquee-track py-3">
-      <span class="font-label text-muted whitespace-nowrap pr-12" data-i18n="hero.marquee">Restoran • Kafe • Rooftop • Rental Unit • Fine Dining • Bar</span>
-      <span class="font-label text-muted whitespace-nowrap pr-12" data-i18n="hero.marquee" aria-hidden="true">Restoran • Kafe • Rooftop • Rental Unit • Fine Dining • Bar</span>
-    </div>
+  <div class="border-y border-line mb-10 sm:mb-12 py-3 gsap-hero-cta">
+    <p class="font-label text-muted" data-i18n="hero.marquee">Restoran • Kafe • Rooftop • Rental Unit • Fine Dining • Bar</p>
   </div>
 
-  <div class="corner-ticks texture-light w-full aspect-[1344/618] rounded-t-lg bg-soft border border-line border-b-0 overflow-hidden gsap-hero-img">
+  <div class="corner-ticks w-full aspect-[1344/618] rounded-t-lg bg-soft border border-line border-b-0 overflow-hidden gsap-hero-img">
     <img src="assets/seatin-dashboard.png" alt="Screenshot dashboard SeatIn" class="w-full h-full object-contain">
   </div>
 </section>
@@ -443,9 +431,37 @@
   </div>
 </section>
 
+<!-- ══════════════════ TAMPILAN ══════════════════ -->
+<section id="tampilan" class="relative z-0 border-t border-line px-5 sm:px-10 lg:px-20 py-12 sm:py-16 lg:py-20">
+  <span class="sec-num hidden lg:block" aria-hidden="true">04</span>
+  <p class="font-label text-muted mb-4 gsap-bar" data-i18n="tampilan.label">Tampilan</p>
+  <h2 class="h-sec mb-4 break-words gsap-head" data-i18n="tampilan.title">Lihat Langsung Seperti Apa SeatIn</h2>
+  <p class="text-sm leading-relaxed text-muted max-w-2xl mb-9 sm:mb-11 gsap-head" data-i18n="tampilan.sub">
+    Tangkapan layar dari sistem yang berjalan di Limarasa Braga: halaman yang dilihat tamu, dan dashboard yang dipakai tim.
+  </p>
+
+  <div class="grid grid-cols-1 lg:grid-cols-[300px_minmax(0,1fr)] gap-x-12 gap-y-12 items-start">
+    <figure class="gsap-card w-full max-w-[300px] mx-auto lg:mx-0">
+      <button type="button" class="zoom-btn block w-full text-left" data-zoom><img src="assets/seatin-reservasi-tamu.webp" width="780" height="1688" loading="lazy" decoding="async" alt="Halaman reservasi tamu di ponsel: stepper empat langkah dan pilihan tanggal" data-i18n-alt="cara.shot.alt" class="w-full h-auto rounded-lg border border-line bg-white"></button>
+      <figcaption class="font-label text-muted mt-3" data-i18n="tampilan.cap1">Sisi tamu: pesan dari ponsel</figcaption>
+    </figure>
+
+    <div class="space-y-12">
+      <figure class="gsap-card">
+        <button type="button" class="zoom-btn block w-full text-left" data-zoom><img src="assets/seatin-antrean.webp" width="1286" height="404" loading="lazy" decoding="async" alt="Dashboard antrean SeatIn: ringkasan menunggu, dikonfirmasi, ditolak, dan filter pesanan" data-i18n-alt="fitur.c5.alt" class="w-full h-auto rounded-lg border border-line"></button>
+        <figcaption class="font-label text-muted mt-3" data-i18n="tampilan.cap2">Sisi tim: antrean reservasi</figcaption>
+      </figure>
+      <figure class="gsap-card">
+        <button type="button" class="zoom-btn block w-full text-left" data-zoom><img src="assets/seatin-pengaturan.webp" width="896" height="407" loading="lazy" decoding="async" alt="Halaman Pengaturan SeatIn: aturan pemesanan, uang muka 50 persen" data-i18n-alt="fitur.c6.alt" class="w-full h-auto rounded-lg border border-line"></button>
+        <figcaption class="font-label text-muted mt-3" data-i18n="tampilan.cap3">Sisi tim: aturan DP dan jadwal, diubah sendiri</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
 <!-- ══════════════════ CARA KERJA ══════════════════ -->
 <section id="cara-kerja" class="relative z-0 px-5 sm:px-10 lg:px-20 py-12 sm:py-16 lg:py-20">
-  <span class="sec-num hidden lg:block" aria-hidden="true">04</span>
+  <span class="sec-num hidden lg:block" aria-hidden="true">05</span>
   <p class="font-label text-muted mb-4 gsap-bar" data-i18n="cara.label">Cara Kerja</p>
   <h2 class="h-sec mb-9 sm:mb-11 break-words gsap-head" data-i18n="cara.title">Dari Ketuk Sampai Duduk</h2>
 
@@ -471,11 +487,12 @@
       <div class="text-sm leading-relaxed text-muted" data-i18n="cara.s4.d">Semua reservasi tampil rapi di dashboard, siap dikonfirmasi, ditolak, atau diekspor menjadi laporan.</div>
     </div>
   </div>
+
 </section>
 
 <!-- ══════════════════ COCOK UNTUK ══════════════════ -->
 <section id="cocok" class="relative z-0 px-5 sm:px-10 lg:px-20 py-12 sm:py-16 lg:py-20 bg-soft">
-  <span class="sec-num sec-num--soft hidden lg:block" aria-hidden="true">05</span>
+  <span class="sec-num sec-num--soft hidden lg:block" aria-hidden="true">06</span>
   <p class="font-label text-mutedSoft mb-4 gsap-bar" data-i18n="cocok.label">Cocok Untuk</p>
   <h2 class="h-sec mb-4 break-words gsap-head" data-i18n="cocok.title">Bukan Cuma Restoran</h2>
   <p class="text-sm leading-relaxed text-mutedSoft max-w-2xl mb-9 sm:mb-11 gsap-head" data-i18n="cocok.sub">
@@ -519,7 +536,7 @@
 
 <!-- ══════════════════ PROSES ONBOARDING ══════════════════ -->
 <section id="proses" class="relative z-0 px-5 sm:px-10 lg:px-20 py-12 sm:py-16 lg:py-20">
-  <span class="sec-num hidden lg:block" aria-hidden="true">06</span>
+  <span class="sec-num hidden lg:block" aria-hidden="true">07</span>
   <p class="font-label text-muted mb-4 gsap-bar" data-i18n="proses.label">Proses Setup</p>
   <h2 class="h-sec mb-4 break-words gsap-head" data-i18n="proses.title">Siap Pakai, Bukan Proyek Bertahun</h2>
   <p class="text-sm leading-relaxed text-muted max-w-2xl mb-9 sm:mb-11 gsap-head" data-i18n="proses.sub">
@@ -555,7 +572,7 @@
 
 <!-- ══════════════════ DUKUNGAN PERSONAL ══════════════════ -->
 <section id="dukungan" class="relative z-0 px-5 sm:px-10 lg:px-20 py-12 sm:py-16 lg:py-20 bg-soft">
-  <span class="sec-num sec-num--soft hidden lg:block" aria-hidden="true">07</span>
+  <span class="sec-num sec-num--soft hidden lg:block" aria-hidden="true">08</span>
   <p class="font-label text-mutedSoft mb-4 gsap-bar" data-i18n="dukungan.label">Dukungan Personal</p>
   <h2 class="h-sec mb-4 break-words gsap-head" data-i18n="dukungan.title">Anda Tidak Sendirian Setelah Go-Live</h2>
   <p class="text-sm leading-relaxed text-mutedSoft max-w-2xl mb-9 sm:mb-11 gsap-head" data-i18n="dukungan.sub">
@@ -589,7 +606,7 @@
   dengan testimoni + nama klien. Sengaja dibiarkan sebagai CTA dulu supaya
   tidak ada klaim/testimoni yang belum dikonfirmasi.
 -->
-<section class="relative bg-black texture-dark text-white overflow-hidden">
+<section class="relative bg-black text-white overflow-hidden">
   <div class="px-5 sm:px-10 lg:px-20 py-20 sm:py-24 lg:py-32">
     <h2 class="h-cta max-w-4xl mb-7 break-words gsap-head" data-i18n-html="cta.title">Berhenti Mengurus<br>Reservasi Manual.</h2>
     <p class="text-sm leading-relaxed text-white/70 max-w-xl mb-9 gsap-head" data-i18n="cta.sub">
@@ -601,7 +618,7 @@
 
 <!-- ══════════════════ FAQ ══════════════════ -->
 <section id="faq" class="relative z-0 px-5 sm:px-10 lg:px-20 py-12 sm:py-16 lg:py-20">
-  <span class="sec-num hidden lg:block" aria-hidden="true">08</span>
+  <span class="sec-num hidden lg:block" aria-hidden="true">09</span>
   <p class="font-label text-muted mb-4 gsap-bar" data-i18n="faq.label">Pertanyaan Umum</p>
   <h2 class="h-sec mb-9 sm:mb-11 break-words gsap-head" data-i18n="faq.title">Yang Sering Ditanya</h2>
 
@@ -653,7 +670,7 @@
 
 <!-- ══════════════════ KONTAK ══════════════════ -->
 <section id="kontak" class="relative z-0 px-5 sm:px-10 lg:px-20 py-12 sm:py-16 lg:py-20 bg-soft">
-  <span class="sec-num sec-num--soft hidden lg:block" aria-hidden="true">09</span>
+  <span class="sec-num sec-num--soft hidden lg:block" aria-hidden="true">10</span>
   <p class="font-label text-mutedSoft mb-4 gsap-bar" data-i18n="kontak.label">Mulai Dari Sini</p>
   <h2 class="h-sec mb-4 break-words gsap-head" data-i18n="kontak.title">Ceritakan Tempat Anda</h2>
   <p class="text-sm leading-relaxed text-mutedSoft max-w-2xl mb-9 sm:mb-11 gsap-head" data-i18n="kontak.sub">
@@ -761,6 +778,7 @@ var I18N = {
     "meta.desc": "SeatIn mengubah reservasi WhatsApp yang berantakan jadi satu sistem rapi: tamu memesan online, uang muka otomatis, notifikasi WhatsApp, dan dashboard antrean untuk tim Anda.",
 
     "nav.fitur": "Fitur",
+    "nav.tampilan": "Tampilan",
     "nav.cara": "Cara Kerja",
     "nav.cocok": "Cocok Untuk",
     "nav.proses": "Proses",
@@ -830,6 +848,15 @@ var I18N = {
 
     "cara.label": "Cara Kerja",
     "cara.title": "Dari Ketuk Sampai Duduk",
+    "cara.shot.alt": "Halaman reservasi tamu di ponsel: stepper empat langkah dan pilihan tanggal",
+    "tampilan.label": "Tampilan",
+    "tampilan.title": "Lihat Langsung Seperti Apa SeatIn",
+    "tampilan.sub": "Tangkapan layar dari sistem yang berjalan di Limarasa Braga: halaman yang dilihat tamu, dan dashboard yang dipakai tim.",
+    "tampilan.cap1": "Sisi tamu: pesan dari ponsel",
+    "tampilan.cap2": "Sisi tim: antrean reservasi",
+    "tampilan.cap3": "Sisi tim: aturan DP dan jadwal, diubah sendiri",
+    "fitur.c5.alt": "Dashboard antrean SeatIn: ringkasan menunggu, dikonfirmasi, ditolak, dan filter pesanan",
+    "fitur.c6.alt": "Halaman Pengaturan SeatIn: aturan pemesanan, uang muka 50 persen",
     "cara.s1.t": "Tamu Pilih Jadwal",
     "cara.s1.d": "Membuka halaman reservasi Anda, lalu memilih tanggal, jam, jumlah tamu, dan area yang diinginkan.",
     "cara.s2.t": "Pre-Order & Bayar DP",
@@ -936,6 +963,7 @@ var I18N = {
     "meta.desc": "SeatIn turns messy WhatsApp reservations into one clean system: guests book online, deposits are collected automatically, WhatsApp confirmations go out, and your team runs the queue from one dashboard.",
 
     "nav.fitur": "Features",
+    "nav.tampilan": "Screens",
     "nav.cara": "How It Works",
     "nav.cocok": "Who It's For",
     "nav.proses": "Process",
@@ -1005,6 +1033,15 @@ var I18N = {
 
     "cara.label": "How It Works",
     "cara.title": "From Tap To Table",
+    "cara.shot.alt": "Guest reservation page on a phone: four-step progress bar and date picker (interface in Indonesian)",
+    "tampilan.label": "Screens",
+    "tampilan.title": "See What SeatIn Looks Like",
+    "tampilan.sub": "Screenshots from the live system at Limarasa Braga: the page guests see, and the dashboard the team uses.",
+    "tampilan.cap1": "Guest side: booking from a phone",
+    "tampilan.cap2": "Team side: the reservation queue",
+    "tampilan.cap3": "Team side: deposit and schedule rules, edited by you",
+    "fitur.c5.alt": "SeatIn queue dashboard: pending, confirmed and rejected totals plus order filters (interface in Indonesian)",
+    "fitur.c6.alt": "SeatIn Settings page: booking rules, 50 percent deposit (interface in Indonesian)",
     "cara.s1.t": "Guest Picks A Slot",
     "cara.s1.d": "They open your booking page and choose a date, time, party size, and the area they want.",
     "cara.s2.t": "Pre-Order & Deposit",
@@ -1130,6 +1167,10 @@ function applyLang(lang) {
   document.querySelectorAll("[data-i18n-html]").forEach(function (el) {
     var v = dict[el.getAttribute("data-i18n-html")];
     if (v != null) el.innerHTML = v;
+  });
+  document.querySelectorAll("[data-i18n-alt]").forEach(function (el) {
+    var v = dict[el.getAttribute("data-i18n-alt")];
+    if (v != null) el.setAttribute("alt", v);
   });
   document.querySelectorAll("[data-i18n-placeholder]").forEach(function (el) {
     var v = dict[el.getAttribute("data-i18n-placeholder")];
@@ -1370,5 +1411,32 @@ window.addEventListener("load", function () {
 });
 </script>
 
+
+<dialog id="lightbox" aria-label="Gambar diperbesar">
+  <div class="lb-wrap">
+    <button type="button" class="lb-close" aria-label="Tutup">&times;</button>
+    <div class="lb-scroll"><img id="lb-img" alt=""></div>
+  </div>
+</dialog>
+<script>
+(function () {
+  var dlg = document.getElementById("lightbox");
+  if (!dlg || !dlg.showModal) return;
+  var big = document.getElementById("lb-img");
+  document.querySelectorAll("[data-zoom]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var img = btn.querySelector("img");
+      big.src = img.currentSrc || img.src;
+      big.alt = img.alt;
+      if (img.naturalWidth > img.naturalHeight) big.setAttribute("data-wide", ""); else big.removeAttribute("data-wide");
+      dlg.showModal();
+    });
+  });
+  dlg.addEventListener("click", function (e) {
+    if (e.target === dlg || e.target.classList.contains("lb-wrap") || e.target.classList.contains("lb-close")) dlg.close();
+  });
+  dlg.addEventListener("close", function () { big.removeAttribute("src"); });
+})();
+</script>
 </body>
 </html>
